@@ -92,49 +92,6 @@ describe('github hook handler', function() {
         validatorsUsed = undefined;
         validationPosted = undefined;
     });
-
-    it('does not call pr handler when sent a non-mergeable pull_request event', function(done) {
-        var mockPayload = require('./github_payloads/pr_non_mergeable'),
-            mockRequest = {
-                body: {
-                    payload: JSON.stringify(mockPayload)
-                }
-            },
-            mockResponse = {
-                end: function() {
-                    assert(!validationPerformed, 'validation against PR should not be performed');
-
-                    assert(validationPosted, 'validation status should be posted');
-
-                    assert.equal(validationPosted.state, 'error', 
-                        'PR state is wrong');
-
-                    assert.equal(validationPosted.description, 
-                        'NuPIC Status: ' + 
-                        'Please merge `numenta:master` into `DR:a-feature` and resolve merge conflicts.', 
-                        'PR status description is wrong');
-
-                    assert.equal(validationPosted.target_url, 
-                        'https://github.com/numenta/experiments/compare/DR:a-feature...numenta:master#commits_bucket',
-                        'PR status detail url is wrong');
-
-                    // Reset just in case further tests use them.
-                    validationPerformed = undefined;
-                    validatedSHA = undefined;
-                    validatedUser = undefined;
-                    validatorsUsed = undefined;
-                    validationPosted = undefined;
-                    done();
-                }
-            };
-
-        handler = githubHook.initializer(mockClients, 'mockConfig');
-
-        validationPerformed = false;
-
-        handler(mockRequest, mockResponse);
-
-    });
     
     // it('calls push handler when sent a push event', function() {});
     
