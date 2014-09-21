@@ -49,20 +49,14 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
 
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
             if (external) {
-                // only runs validation if the PR is mergeable
-                if(pullRequest.mergeable) {
-                    shaValidator.performCompleteValidation(
-                        sha,
-                        githubUser,
-                        repoClient,
-                        dynamicValidatorModules,
-                        true,
-                        cb
-                    );
-                } else {
-                    postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient);
-                    if (cb) { cb(); }
-                }
+                shaValidator.performCompleteValidation(
+                    sha,
+                    githubUser,
+                    repoClient,
+                    dynamicValidatorModules,
+                    true,
+                    cb
+                );
             } else {
                 // ignore statuses that were created by this server
                 // TODO it should never get into this branch, but it's seen in production
@@ -173,7 +167,11 @@ function getBuildHooksForMonitor(monitorConfig) {
 
 /**
  * Post status for non-mergeable pull request
- *
+ * 
+ * @note
+ *      This function is no longer used, because a similar feature is provided by Github.
+ *      Please refer to https://github.com/numenta/nupic.tools/issues/145 for context.
+ * 
  */
 function postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient) {
     log.log('The PR is not mergeable, mergeable_state: ' + pullRequest.mergeable_state);
