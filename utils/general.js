@@ -1,8 +1,9 @@
 var fs = require('fs'),
     path = require('path'),
-    RepositoryClient = require('./repoClient'),
+    _ = require('underscore'),
+    RepositoryClient = require('./repo-client'),
     NUPIC_STATUS_PREFIX = 'NuPIC Status:',
-    log = require('./log');
+    log = require('./logger').logger;
 
 /* Logs error and exits. */
 function die(err) {
@@ -18,8 +19,8 @@ var arrayUnique = function(a) {
 };
 
 /**
- * Reads all the JavaScript files within a directory, assuming they are all 
- * proper node.js modules, and loads them. 
+ * Reads all the JavaScript files within a directory, assuming they are all
+ * proper node.js modules, and loads them.
  * @return {Array} Modules loaded.
  */
 function initializeModulesWithin(dir, exclusions) {
@@ -31,8 +32,8 @@ function initializeModulesWithin(dir, exclusions) {
         if (exclusions != undefined && exclusions.indexOf(moduleName) > -1) {
             excluded = true;
         }
-        if(! excluded && 
-                fileName.charAt(0) != "." 
+        if(! excluded &&
+                fileName.charAt(0) != "."
                 && fileName.substr(fileName.length - 3) == ".js")   {
             output.push(require('../' + dir + '/' + moduleName));
         }
@@ -47,19 +48,22 @@ function initializeModulesWithin(dir, exclusions) {
  *
  * If an error occurs during communication with Github, the application startup
  * will fail.
- * 
+ *
  * @param {String} Pull request web hook URL to register with Github.
  * @param {Object} Application configuration.
- * @param {Function} Callback, to be sent a map of RepositoryClient objects, 
- * constructed using the "monitors" part of the configuration, keyed by Github 
+ * @param {Function} Callback, to be sent a map of RepositoryClient objects,
+ * constructed using the "monitors" part of the configuration, keyed by Github
  * "org/repo".
  */
 function constructRepoClients(prWebhookUrl, config, callback) {
     var repoClients = {},
+        uncheckedClients = [],
         globalValidatorConfig = config.validators,
+        monitorKeys = _.keys(config.monitors),
         count = 0;
+
     // Set up one github client for each repo target in config.
-    Object.keys(config.monitors).forEach(function(monitorKey) {
+    _.each(monitorKeys, function(monitorKey) {
         var monitorConfig = config.monitors[monitorKey],
             keyParts = monitorKey.split('/'),
             org = keyParts.shift(),
@@ -76,35 +80,53 @@ function constructRepoClients(prWebhookUrl, config, callback) {
             monitorConfig.validators.exclude = [];
         }
         if (globalValidatorConfig && globalValidatorConfig.exclude) {
-            monitorConfig.validators.exclude 
+            monitorConfig.validators.exclude
                 = arrayUnique(monitorConfig.validators.exclude.concat(globalValidatorConfig.exclude));
         }
 
         repoClient = new RepositoryClient(monitorConfig);
-        log('RepositoryClient created for ' 
-            + monitorConfig.username.magenta + ' on ' 
+        log.log('RepositoryClient created for '
+            + monitorConfig.username.magenta + ' on '
             + repoClient.toString().magenta);
 
-        repoClient.confirmWebhookExists(prWebhookUrl, ['push', 'pull_request', 'status'], function(err, hook) {
-            if (err) {
-                log.error('Error during webhook confirmation for ' + repoClient.toString());
-                die(err);
-            } else {
-                if (hook) {
-                    log.warn('Webhook created on ' + repoClient.toString() + ':\n'
-                                            + '\tfor "' + hook.events.join(', ') + '"\n'
-                                            + '\ton ' + hook.config.url);
+        uncheckedClients.push(repoClient);
+
+    });
+
+    // Check the rate limit before making any real calls.
+    uncheckedClients[0].rateLimit(function(err, rateLimit) {
+        log.debug(rateLimit.rate);
+        log.debug('GitHub API calls remaining before rate limit exceeded: %s.', rateLimit.rate.remaining);
+        log.debug('Github API rate limit resets at %s.', new Date(rateLimit.rate.reset * 1000).toString());
+        if (rateLimit.rate.remaining == 0) {
+            throw Error('Github API Rate Limit Exceeded!');
+        }
+
+        // Now confirm all webhooks are ready.
+        _.each(uncheckedClients, function(repoClient, i) {
+            var monitorKey = monitorKeys[i];
+            repoClient.confirmWebhookExists(prWebhookUrl, ['push', 'pull_request', 'status'], function(err, hook) {
+                if (err) {
+                    log.error('Error during webhook confirmation for ' + repoClient.toString());
+                    die(err);
                 } else {
-                    log('Webhook exists for ' + repoClient.toString());
+                    if (hook) {
+                        log.warn('Webhook created on ' + repoClient.toString() + ':\n'
+                            + '\tfor "' + hook.events.join(', ') + '"\n'
+                            + '\ton ' + hook.config.url);
+                    } else {
+                        log.log('Webhook exists for ' + repoClient.toString());
+                    }
+                    count++;
                 }
-                count++;
-            }
-            repoClients[monitorKey] = repoClient;
-            if (count == (Object.keys(config.monitors).length))  {
-                callback(repoClients);
-            }
+                repoClients[monitorKey] = repoClient;
+                if (count == (Object.keys(config.monitors).length))  {
+                    callback(repoClients);
+                }
+            });
         });
     });
+
 }
 
 /* Sorts github statuses by created_at time */
@@ -123,22 +145,29 @@ function sortStatuses(statuses) {
 
 /**
  * Checks to see if the latest status in the history for this SHA was created by
- * the nupic.tools server or was externally created. 
+ * the nupic.tools server or was externally created.
  */
-function lastStatusWasExternal(repoClient, sha, cb) {
+function lastStatusWasExternal(repoClient, sha, callback) {
     repoClient.getAllStatusesFor(sha, function(err, statusHistory) {
-        var latestStatus = sortStatuses(statusHistory).shift();
-        if (latestStatus && latestStatus.description.indexOf(NUPIC_STATUS_PREFIX) == 0) {
-            if (cb) { cb(false); }
-        } else {
-            cb(true);
+        var latestStatus
+          , external = false;
+
+        if (statusHistory.length) {
+            latestStatus = sortStatuses(statusHistory).shift();
+            if (latestStatus.description.indexOf(NUPIC_STATUS_PREFIX) != 0) {
+                external = true;
+            }
+        }
+
+        if (callback) {
+            callback(external);
         }
     });
 }
 
-/** 
+/**
  * Some old statuses have old redundant prefixes due to previous processing errors
- * that list "Nupic Status: " multiple times before the actual status message. 
+ * that list "Nupic Status: " multiple times before the actual status message.
  * This will clean those up so there is only one.
  */
 function normalizeStatusDescription(description) {
@@ -162,30 +191,11 @@ function sterilizeConfig(config) {
     return out;
 }
 
-/* Dumb function for output formatting to console. */
-function padInt(n) {
-    if (n < 10) {
-        return '0' + n;
-    }
-    return n;
-}
-/* Dumb function for output formatting to console. */
-function padDecimal(n) {
-    if (n < 10) {
-        return n + '00';
-    } else if (n < 100) {
-        return n + '0';
-    }
-    return n;
-}
-
 module.exports = {
     initializeModulesWithin: initializeModulesWithin,
     constructRepoClients: constructRepoClients,
     sterilizeConfig: sterilizeConfig,
     sortStatuses: sortStatuses,
-    padInt: padInt,
-    padDecimal: padDecimal,
     normalizeStatusDescription: normalizeStatusDescription,
     lastStatusWasExternal: lastStatusWasExternal,
     __module: module // for unit testing and mocking require()

@@ -1,51 +1,65 @@
 {
-    "name": "nupic.tools",
-    "version": "0.0.2",
-    "author": "Numenta.org <help@numenta.org>",
-    "description": "Set of tools for integration between github, travis, and our developer workflow.",
-    "contributors": [{
-            "name": "Matt Taylor",
-            "email": "matt@numenta.org"
-        },
-        {
-            "name": "Carl Friess",
-            "email": "carl.friess@me.com"
-        },
-        {
-            "name": "Jeff Fohl",
-            "email": "jeff@fohl.com"
-    }],
-    "main": "program.js",
-    "scripts": {
-        "preinstall": "npm install -g forever",
-        "test": "istanbul cover _mocha -- --recursive -R spec && istanbul report text-summary > coverage/summary.txt && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
-        "start": "node program.js"
+  "name": "nupic.tools",
+  "version": "0.0.2",
+  "author": "Matthew Taylor <matt@numenta.org>",
+  "description": "Set of tools for integration between github, travis, and our developer workflow.",
+  "contributors": [
+    {
+      "name": "Matt Taylor",
+      "email": "matt@numenta.org"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/numenta/nupic.tools.git"
+    {
+      "name": "Carl Friess",
+      "email": "carl.friess@me.com"
     },
-    "dependencies": {
-        "colors"        : "0.6.2",
-        "connect"       : "2.17.1",
-        "request"       : "2.36.0",
-        "github"        : "0.1.16",
-        "ansi-to-html"  : "0.1.1",
-        "jsdom"         : "0.10.5",
-        "q"             : "1.0.1",
-        "underscore"    : "1.6.0",
-        "travis-ci"     : "1.2.0"
+    {
+      "name": "Jeff Fohl",
+      "email": "jeff@fohl.com"
     },
-    "devDependencies": {
-        "proxyquire"    : "0.5.x",
-        "mocha"         : "1.12.x",
-        "istanbul"      : "0.1.x",
-        "sinon"         : "1.7.x",
-        "chai"          : "1.9.x",
-        "coveralls"     : "2.10.0"
-    },
-    "license": "MIT",
-    "engines": {
-        "node": ">=0.10"
+    {
+      "name": "Utensil Song",
+      "email": "utensilcandel@gmail.com"
     }
+  ],
+  "main": "program.js",
+  "scripts": {
+    "preinstall": "npm install -g forever",
+    "test": "istanbul cover _mocha -- --recursive -R spec && istanbul report text-summary > coverage/summary.txt && cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
+    "start": "node program.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/numenta/nupic.tools.git"
+  },
+  "dependencies": {
+    "ansi-to-html": "0.1.1",
+    "async": "0.9.0",
+    "body-parser": "1.4.3",
+    "colors": "0.6.2",
+    "express": "4.4.5",
+    "github": "0.2.1",
+    "handlebars": "1.3.0",
+    "js-yaml": "3.1.0",
+    "jsdom": "0.10.5",
+    "memory-cache": "0.0.5",
+    "morgan": "1.1.1",
+    "q": "1.0.1",
+    "request": "2.36.0",
+    "travis-ci": "1.2.0",
+    "underscore": "1.6.0",
+    "winston": "0.7.3"
+  },
+  "devDependencies": {
+    "proxyquire": "0.5.x",
+    "mocha": "1.12.x",
+    "istanbul": "0.1.x",
+    "sinon": "1.7.x",
+    "chai": "1.9.x",
+    "timekeeper": "0.0.4",
+    "coveralls": "2.10.0"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.10"
+  }
 }

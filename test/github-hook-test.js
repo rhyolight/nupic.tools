@@ -1,4 +1,4 @@
-var assert = require('assert');
+var assert = require('assert'),
     proxyquire = require('proxyquire'),
     utilStub = {
         initializeModulesWithin: function() {
@@ -14,7 +14,7 @@ describe('github hook handler', function() {
     var validationPerformed = false,
         executedHookCommands = [],
         validatedSHA, validatedUser, validatorsUsed, validationPosted,
-        githubHook = proxyquire('./../githubHook', {
+        githubHook = proxyquire('./../github-hook', {
             'child_process': {
                 exec: function(cmd, cb) {
                     executedHookCommands.push(cmd);
@@ -22,9 +22,8 @@ describe('github hook handler', function() {
                 }
             },
             './utils/general': utilStub,
-            './utils/shaValidator': {
+            './utils/sha-validator': {
                 performCompleteValidation: function(sha, githubUser, _, validators, postStatus, cb) {
-                    console.log(arguments);
                     validationPerformed = true;
                     validatedSHA = sha;
                     validatedUser = githubUser;
@@ -105,18 +104,19 @@ describe('github hook handler', function() {
                 end: function() {
                     assert(!validationPerformed, 'validation against PR should not be performed');
 
-                    assert(validationPosted, 'validation status should be posted')
+                    assert(validationPosted, 'validation status should be posted');
 
-                    /* TODO add more detailed assertions on validationPosted
-                        {
-                            user: repoClient.org,
-                            repo: repoClient.repo,
-                            sha: sha,
-                            state: statusDetails.state,
-                            description: statusDescription,
-                            target_url: statusDetails.target_url
-                        }
-                    */
+                    assert.equal(validationPosted.state, 'error', 
+                        'PR state is wrong');
+
+                    assert.equal(validationPosted.description, 
+                        'NuPIC Status: ' + 
+                        'Please merge `numenta:master` into `DR:a-feature` and resolve merge conflicts.', 
+                        'PR status description is wrong');
+
+                    assert.equal(validationPosted.target_url, 
+                        'https://github.com/numenta/experiments/compare/DR:a-feature...numenta:master#commits_bucket',
+                        'PR status detail url is wrong');
 
                     // Reset just in case further tests use them.
                     validationPerformed = undefined;
@@ -215,7 +215,5 @@ describe('github hook handler', function() {
         validationPosted = undefined;
         executedHookCommands = [];
     });
-
-
 
 });

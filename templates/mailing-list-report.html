@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head><title>NuPIC Mailing List Statistics</title>
+    <link href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css' rel='stylesheet' media='screen'>
+    <link rel='shortcut icon' type='image/x-icon' href='http://status.numenta.org/favicon.ico'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+</head>
+<body>
+<div class='container-fluid'>
+
+    <div class='jumbotron'>
+        <div class='row'>
+            <div class='col-md-8'>
+                <h1><img style='float:left;margin:0 20px 20px 0;' alt='Numenta logo'
+                                           src='http://numenta.org/images/numenta-icon128.png'>{{title}}</h1>
+            </div>
+            <div class='col-md-4' style='padding-top:40px;'><h3>Total subscribers: {{totalSubscribers}}</h3>
+
+            <h3>Total messages: {{totalMessages}}</h3></div>
+        </div>
+    </div>
+
+    <table class='table'>
+        <tr>
+            {{#each mailingLists}}
+                <td><h2>{{name}}</h2><h4>Total subscribers: {{subscribers}}</h4>
+                    <table class='table'>
+                        <tr>
+                            <th>Month</th>
+                            <th>Messages</th>
+                        </tr>
+                        {{#each messages.byMonth}}
+                            <tr>
+                                <td>{{name}}</td>
+                                <td>{{number}}</td>
+                            </tr>
+                        {{/each}}
+                        <tr>
+                            <th>Total</th>
+                            <td>{{messages.total}}</td>
+                        </tr>
+
+                    </table>
+                </td>
+            {{/each}}
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>

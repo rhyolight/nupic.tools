@@ -1,0 +1,64 @@
+<html>
+
+<head><title>NuPIC Tools Status</title>
+    <link href='//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css' rel='stylesheet' media='screen'>
+    <link rel='shortcut icon' type='image/x-icon' href='http://status.numenta.org/favicon.ico'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        body {
+            margin: 20px;
+        }
+        table td {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>nupic.tools is alive</h1>
+
+    <blockquote>Remaining Github API calls: {{rateLimit.rate.remaining}}.</blockquote>
+
+    <h3>This server is monitoring the following repositories:</h3>
+    <ul>
+        {{#each monitors}}
+            <li>
+                <a target="_blank"
+                   href="http://github.com/{{this}}/">http://github.com/{{this}}</a>
+            </li>
+        {{/each}}
+    </ul>
+
+    <h3>The following validators are active:</h3>
+    <ul>
+        {{#each validators}}
+            <li>{{this}}</li>
+        {{/each}}
+    </ul>
+
+    <h3>Available add-on services:</h3>
+    <table>
+        <tbody>
+        <tr>
+            <th style="width:200px;">Service</th>
+            <th>URL</th>
+            <th>Description</th>
+        </tr>
+        {{#each handlers}}
+        <tr>
+            {{#each this}}
+            <td>
+                <a target="_blank"
+                   href="{{this.url}}">{{this.title}}</a>
+            </td>
+            <td>{{@key}}</td>
+            <td>{{this.description}}</td>
+            {{/each}}
+        </tr>
+        {{/each}}
+        </tbody>
+    </table>
+
+</body>
+</html>

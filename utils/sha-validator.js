@@ -1,5 +1,5 @@
 var utils = require('./general'),
-    log = require('./log');
+    log = require('./logger').logger;
 
 function coloredStatus(status) {
     if (status == 'success') {
@@ -12,11 +12,11 @@ function coloredStatus(status) {
 }
 
 function postNewNupicStatus(sha, statusDetails, repoClient) {
-    log.info(sha + ': Posting new NuPIC Status (' 
+    log.info(sha + ': Posting new NuPIC Status ('
         + coloredStatus(statusDetails.state) + ') to github');
-    // If the old status was created by nupic.tools, it will start with 
+    // If the old status was created by nupic.tools, it will start with
     // "NuPIC Status:". But if it was created by Travis-CI, we want to add that
-    // little prefix to the description string. 
+    // little prefix to the description string.
     var statusDescription = utils.normalizeStatusDescription(
         statusDetails.description
     );
@@ -35,7 +35,7 @@ function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
     repoClient.getAllOpenPullRequests(function(err, prs) {
         var count = 0,
             errors = null;
-        log('Found ' + prs.length + ' open pull requests...');
+        log.log('Found ' + prs.length + ' open pull requests...');
         prs.map(function(pr) { return pr.number; }).forEach(function(pr_number) {
             repoClient.triggerTravisForPullRequest(pr_number, function(err, success) {
                 count++;
@@ -109,7 +109,7 @@ function performCompleteValidation(sha, githubUser, repoClient, validators, post
                     log.debug(sha + ': Skipped validator "' + validator.name + '"');
                     runNextValidation();
                 } else {
-                    log(sha + ': Running commit validator: ' + validator.name);
+                    log.log(sha + ': Running commit validator: ' + validator.name);
                     validatorsRun.push(validator);
                     validator.validate(sha, githubUser, statusHistory, repoClient, function(err, result) {
                         if (err) {
@@ -117,17 +117,17 @@ function performCompleteValidation(sha, githubUser, repoClient, validators, post
                             console.error(err);
                             return callback(null, sha, {
                                 state: 'error',
-                                description: 'Error running commit validator "' + validator.name + '": ' + err.message 
+                                description: 'Error running commit validator "' + validator.name + '": ' + err.message
                             }, repoClient);
                         }
-                        log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
+                        log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
                         if (result.state !== 'success') {
-                            // Upon failure, we set a flag that will skip the 
+                            // Upon failure, we set a flag that will skip the
                             // remaining validators and post a failure status.
                             validationFailed = true;
                             callback(null, sha, result, repoClient);
                         }
-                        // This code is just allowing the different validators to 
+                        // This code is just allowing the different validators to
                         // fight over which one will provide the "Details" URL
                         // that gets displayed on the Github PR.
                         if (validator.hasOwnProperty('priority')) {
@@ -141,12 +141,12 @@ function performCompleteValidation(sha, githubUser, repoClient, validators, post
                                 target_url = result.target_url;
                             }
                         };
-                        log(sha + ': ' + validator.name + ' complete.');
+                        log.log(sha + ': ' + validator.name + ' complete.');
                         runNextValidation();
                     });
                 }
             } else {
-                log(sha + ': Validation complete.');
+                log.log(sha + ': Validation complete.');
                 // No more validators left in the array, so we can complete the
                 // validation successfully.
                 if (validatorsSkipped.length > 0) {

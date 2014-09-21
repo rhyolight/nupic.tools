@@ -1,0 +1,12 @@
+---
+  monitors: 
+    numenta/experiments: 
+      contributors: "http://numenta.org/resources/contributors.csv"
+    numenta/nupic: 
+      contributors: "http://numenta.org/resources/contributors.csv"
+      hooks: 
+        push: "~/nupic.tools/bin/post_nupic_push.sh"
+  validators: 
+    exclude: 
+      - "Fast-Forward Validator"
+  logDirectory: "/Users/mtaylor/.forever"

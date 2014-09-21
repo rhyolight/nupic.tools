@@ -1,0 +1,89 @@
+  repos:
+
+    # Primary NuPIC repositories
+    - slug: numenta/nupic
+      type: primary
+      travis: true
+      coverage: true
+
+    - slug: numenta/nupic.core
+      type: primary
+      travis: true
+      coverage: true
+
+    - slug: numenta/nupic-linux64
+      type: primary
+
+    - slug: numenta/nupic-darwin64
+      type: primary
+
+    # Tooling repositories
+    - slug: numenta/nupic.tools
+      type: tooling
+      travis: true
+      coverage: true
+
+    - slug: numenta/nupic.wallboard
+      type: tooling
+
+    - slug: numenta/nupic.regression
+      type: tooling
+      travis: true
+
+    # Support projects
+    - slug: numenta/NAB
+      type: support
+
+    - slug: numenta/numenta.org
+      type: support
+      travis: true
+
+    - slug: numenta/nupic.documents
+      type: support
+
+    # NuPIC applications
+    - slug: numenta/nupic.geospatial
+      type: app
+      travis: true
+      coverage: true
+
+    - slug: numenta/nupic.fluent
+      type: app
+      travis: true
+      coverage: true
+
+    - slug: numenta/nupic.fluent.server
+      type: app
+
+    - slug: numenta/nupic.cerebro
+      type: app
+
+    - slug: numenta/nupic.cerebro2
+      type: app
+
+    - slug: numenta/nupic.cerebro2.server
+      type: app
+
+    - slug: numenta/nupic.critic
+      type: app
+
+    # Misc repositories
+    - slug: numenta/pycept
+      type: misc
+      travis: true
+      coverage: true
+      deploy: "https://pypi.python.org/pypi/pycept/"
+
+    - slug: rhyolight/sprinter.js
+      type: misc
+      travis: true
+      coverage: true
+      deploy: "https://www.npmjs.org/package/sprinter"
+      monitor: false
+
+    - slug: "rhyolight/travis-foreman"
+      type: app
+      travis: true
+      coverage: true
+      deploy: "https://pypi.python.org/pypi/pycept/"
+      monitor: false

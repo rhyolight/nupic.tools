@@ -1,23 +1,23 @@
 var assert = require('assert'),
-    RepositoryClient = require('../../utils/repoClient'),
+    RepositoryClient = require('../../utils/repo-client'),
     proxyquire = require('proxyquire'),
     sinon = require('sinon'),
     jsonUtils = require('../../utils/json'),
     jsonMock = {},
-    urlMap = proxyquire('../../handlers/mailingListReporter', {
+    urlMap = proxyquire('../../handlers/mailing-list-reporter', {
         '../utils/json': jsonMock
     }),
     jsdom = require("jsdom");
 
 describe('mailing list handler url mapping', function() {
-    it('has an entry for the /maillist URL', function() {
-        assert(Object.keys(urlMap).indexOf('/maillist') > -1, 
+    it('has an entry for the /maillist* URL', function() {
+        assert(Object.keys(urlMap).indexOf('/maillist*') > -1,
             'handler does not have proper url mapping');
     });
 });
 
 describe('/maillist URL handler', function() {
-    var initializer = urlMap['/maillist'];
+    var initializer = urlMap['/maillist*'];
 
     it('is a function with title and description', function() {
         var handler = initializer();
@@ -45,7 +45,7 @@ describe('Build URL objects since', function() {
                 }
             ]
         };
-        var requestHandler = urlMap['/maillist'](
+        var requestHandler = urlMap['/maillist*'](
             null, null, mockConfig
         );
         var mockRequest = {};

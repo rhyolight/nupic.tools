@@ -22,7 +22,6 @@ function csvToJson(csv) {
 
 module.exports.getAll = function(csvUrl, callback) {
     request(csvUrl, function(err, _, body) {
-        var out = '';
         if (err) {
             return callback(err);
         }

@@ -64,7 +64,7 @@ describe('when triggering a new travis build', function() {
         'github': MockGithubApi,
         'travis-ci': MockTravisApi
     };
-    RepoClient = proxyquire('../../utils/repoClient', mockDependencies);
+    RepoClient = proxyquire('../../utils/repo-client', mockDependencies);
     repoClient = new RepoClient({
         username: 'mockuser',
         password: 'mockpass',

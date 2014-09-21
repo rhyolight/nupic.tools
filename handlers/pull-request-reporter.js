@@ -75,9 +75,10 @@ prReporter.description =
     'requests for every repository the server is monitoring, keyed by ' + 
     '"organization/repository". When a "repo" is specified, simply returns an ' +
     'array of pull requests with no key.';
+prReporter.url = '/prStatus';
 
 module.exports = {
-    '/prStatus': function(_repoClients) {
+    '/prStatus*': function(_repoClients) {
         repoClients = _repoClients;
         return prReporter;
     }

@@ -4,7 +4,6 @@ function renderJson(output, res) {
         out = JSON.stringify(output);
     }
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Length', out.length);
     res.end(out);
 }
 
@@ -16,7 +15,6 @@ function renderJsonp(output, cbName, res) {
     }
     textOut = cbName + '(' + out + ')';
     res.setHeader('Content-Type', 'application/javascript');
-    res.setHeader('Content-Length', textOut.length);
     res.end(textOut);
 }
 

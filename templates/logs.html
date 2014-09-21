@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NuPIC Wallboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: black;
+            color: white;
+            font: 14pt Courier;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        table td {
+            border: 1px solid grey;
+            padding: 0 5px;
+        }
+
+        td.verbose {
+            color: cyan;
+        }
+        td.debug {
+            color: blue;
+        }
+        td.info {
+            color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>nupic.tools current logs:</h1>
+
+    <table>
+    <thead>
+    <tr>
+        <th>Time</th>
+        <th>Level</th>
+        <th>Message</th>
+    </tr>
+    </thead>
+    <tbody>
+
+    {{#each logs}}
+
+        <tr class="info">
+            <td class="timestamp">{{timestamp}}</td>
+            <td class="{{level}}">{{level}}</td>
+            <td>{{message}}</td>
+        </tr>
+    {{/each}}
+
+    </tbody>
+    </table>
+
+</body>
+</html>

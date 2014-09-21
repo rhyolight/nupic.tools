@@ -1,10 +1,8 @@
 var assert = require('assert'),
     path = require('path'),
     proxyquire = require('proxyquire'),
-    connectStub = {},
     utilStub,
-    configReaderStub,
-    githubHookSub;
+    configReaderStub;
 
 utilStub = {
     sterilizeConfig: function(cfg) {
@@ -13,7 +11,9 @@ utilStub = {
     constructRepoClients: function() {}
 };
 configReaderStub = {
-    read: function() { return {host: 'host', port: 666}; }
+    read: function(path, callback) {
+        callback(null, {host: 'host', port: 666});
+    }
 };
 
 describe('main program', function() {
@@ -21,10 +21,10 @@ describe('main program', function() {
         it('sends the right config file to configReader', function() {
             proxyquire('./../program', {
                 './utils/general': utilStub,
-                './utils/configReader': {read: function(configPath) {
-                    assert.equal(configPath, path.join(__dirname, '..', 'conf/config.json'), 'Wrong default configuration path.');
+                './utils/config-reader': {read: function(configPath) {
+                    assert.equal(configPath, path.join(__dirname, '..', 'conf/config.yaml'), 'Wrong default configuration path.');
                     return {host: 'host', port: 666};
-                }},
+                }}
             });
         });
         it('constructs a proper github webhook url', function() {
@@ -33,7 +33,7 @@ describe('main program', function() {
             };
             proxyquire('./../program', {
                 './utils/general': utilStub,
-                './utils/configReader': configReaderStub
+                './utils/config-reader': configReaderStub
             });
         });
     });

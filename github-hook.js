@@ -1,19 +1,19 @@
 // This module provides a request handler for HTTP calls from Github web hooks.
 var fs = require('fs'),
     _ = require('underscore'),
-    log = require('./utils/log'),
+    log = require('./utils/logger').logger,
     utils = require('./utils/general'),
     contributors = require('./utils/contributors'),
-    shaValidator = require('./utils/shaValidator'),
+    shaValidator = require('./utils/sha-validator'),
     exec = require('child_process').exec,
     VALIDATOR_DIR = 'validators',
     // All the validator modules
     dynamicValidatorModules = [],
     repoClients;
 
-/** 
+/**
  * Given the payload for a Github pull request notification and the associated
- * RepositoryClient object, this function either validates the PR, re-validates 
+ * RepositoryClient object, this function either validates the PR, re-validates
  * all other open PRs (if the PR merged), or ignores it if not against 'master'.
  * @param action {string} Whether PR was opened, closed, etc.
  * @param pullRequest {object} the PR payload from Github.
@@ -27,14 +27,14 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         base = pullRequest.base,
         sha = head.sha;
 
-    log('Received pull request "' + action + '" from ' + githubUser);
+    log.log('Received pull request "' + action + '" from ' + githubUser);
 
     if (action == 'closed') {
         // If this pull request just got merged, we need to re-trigger the
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
-            log('A PR just merged. Re-validating open pull requests...');
-            contributors.getAll(repoClient.contributorsUrl, 
+            log.log('A PR just merged. Re-validating open pull requests...');
+            contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) {
                         return cb(err);
@@ -47,76 +47,50 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         }
     } else {
 
-        // only runs validation if the PR is mergeable, see nupic.tools#65
-        if(pullRequest.mergeable)
-        {
-            utils.lastStatusWasExternal(repoClient, sha, function(external) {
-                if (external) {
+        utils.lastStatusWasExternal(repoClient, sha, function(external) {
+            if (external) {
+                // only runs validation if the PR is mergeable
+                if(pullRequest.mergeable) {
                     shaValidator.performCompleteValidation(
-                        sha, 
-                        githubUser, 
-                        repoClient, 
-                        dynamicValidatorModules, 
-                        true, 
+                        sha,
+                        githubUser,
+                        repoClient,
+                        dynamicValidatorModules,
+                        true,
                         cb
                     );
                 } else {
-                    // ignore statuses that were created by this server
-                    log.warn('Ignoring "' + state + '" status created by nupic.tools.');
+                    postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient);
                     if (cb) { cb(); }
                 }
-            });   
-        }
-        else
-        {
-            log('The PR is not mergeable, mergeable_state: ' + pullRequest.mergeable_state);
+            } else {
+                // ignore statuses that were created by this server
+                // TODO it should never get into this branch, but it's seen in production
+                // just log it for further investigation
+                log.warn('Ignoring status created by nupic.tools for ' + sha + '...');
+                if (cb) { cb(); }
+            }
+        });
 
-            var mergeableState = pullRequest.mergeable_state ? 
-                                    pullRequest.mergeable_state : 'unknown';
-
-            var headBranch = pullRequest.head.label;
-            var baseBranch = pullRequest.base.label;
-
-            // a warning message about the mergeable state of this PR                        
-            var warningMessage = 'The PR is not mergeable: "' + 
-                    mergeableState + '". Please merge `' + 
-                    baseBranch + '` into `' + headBranch +'`.'                        
-
-            // construct a url to compare what's missing in this PR
-            var targetUrl = pullRequest.base.repo.html_url + 
-                        '/compare/' + headBranch + '...' + baseBranch;
-
-            var statusDetails = {
-                state: 'error', 
-                description: warningMessage,
-                target_url: targetUrl
-            };
-
-            // post the status banner on PR
-            // https://developer.github.com/v3/repos/statuses/#create-a-status
-            shaValidator.postNewNupicStatus(sha, statusDetails, repoClient);
-
-            if (cb) { cb(); }
-        }
     }
 }
 
 /**
  * Given a request payload from Github, and the RepositoryClient object associated
- * with this repo, this function retrieves all the known statuses for the repo, 
+ * with this repo, this function retrieves all the known statuses for the repo,
  * assures that this status did not originate from this server (nupic.tools), then
  * performs a complete validation of the repository.
  * @param sha {string} SHA of the tip of the PR.
- * @state {string} State of the PR (opened, closed, merged, etc)
- * @branches {Object[]} List of branches that came with the state change
+ * @param state {string} State of the PR (opened, closed, merged, etc)
+ * @param branches {Object[]} List of branches that came with the state change
  * @param repoClient {RepositoryClient} Repo client associated with this repo this
  *                                      PR was created against.
  * @param cb {function} Will be called when PR has been handled.
  */
 function handleStateChange(sha, state, branches, repoClient, cb) {
-    var isMaster = false,
+    var isMaster,
         buildHooks = undefined;
-    log('State of ' + sha + ' has changed to "' + state + '".');
+    log.log('State of ' + sha + ' has changed to "' + state + '".');
     // A "success" state means that a build passed. If the build passed on the
     // master branch, we need to trigger a "build" hook, which might execute a
     // script to run in the /bin directory.
@@ -127,7 +101,7 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
     // build success hook.
     if (state == 'success' && isMaster) {
         buildHooks = getBuildHooksForMonitor(repoClient);
-        log('Github build success event on ' + repoClient + '/');
+        log.log('Github build success event on ' + repoClient + '/');
         // Only process when there is a build hook defined.
 
         _.each(buildHooks, function(hookCmd) {
@@ -146,14 +120,16 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
                 }
                 commitAuthor = commit.author.login;
                 if (external) {
+
                     shaValidator.performCompleteValidation(
-                        sha, 
-                        commitAuthor, 
-                        repoClient, 
-                        dynamicValidatorModules, 
-                        true, 
+                        sha,
+                        commitAuthor,
+                        repoClient,
+                        dynamicValidatorModules,
+                        true,
                         cb
                     );
+
                 } else {
                     // ignore statuses that were created by this server
                     log.warn('Ignoring "' + state + '" status created by nupic.tools.');
@@ -165,7 +141,7 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
 }
 
 function executeCommand(command) {
-    var child = exec(command, function (error, stdout, stderr) {
+    exec(command, function (error, stdout, stderr) {
         log.verbose(stdout);
         if (stderr) { log.warn(stderr); }
         if (error !== null) {
@@ -196,21 +172,59 @@ function getBuildHooksForMonitor(monitorConfig) {
 }
 
 /**
+ * Post status for non-mergeable pull request
+ *
+ */
+function postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient) {
+    log.log('The PR is not mergeable, mergeable_state: ' + pullRequest.mergeable_state);
+
+    var headBranch = pullRequest.head.label,
+        baseBranch = pullRequest.base.label,
+        warningMessage, targetUrl, statusDetails;
+
+    // A warning message about the mergeable state of this PR.
+    warningMessage = 'Please merge `' +
+        baseBranch + '` into `' + headBranch + '` and resolve merge conflicts.';
+
+    // Avoid "description is too long (maximum is 140 characters)"
+    if (warningMessage.length >= 140) {
+        warningMessage = "Please merge master into this pull request and resolve merge conflicts.";
+    }
+
+    // Construct a url to compare what's missing in this PR.
+    targetUrl = pullRequest.base.repo.html_url +
+        '/compare/' + headBranch + '...' + baseBranch +
+        // jump to the commit log in the comparison,
+        // skip the creating PR part to avoid confusion
+        '#commits_bucket';
+
+    statusDetails = {
+        state: 'error',
+        description: warningMessage,
+        target_url: targetUrl
+    };
+
+    // Post the status banner on PR.
+    // https://developer.github.com/v3/repos/statuses/#create-a-status
+    shaValidator.postNewNupicStatus(sha, statusDetails, repoClient);
+}
+
+/**
  * Handles an event from Github that indicates that a PR has been merged into one
- * of the repositories. This could trigger a script to run locally in response, 
+ * of the repositories. This could trigger a script to run locally in response,
  * called a "push hook", which are defined in the configuration of each repo as
  * hooks.push = 'path/to/script'.
  * @param payload {object} Full Github payload from the API.
- * @param config {object} Application configuration (used to extract the 
+ * @param config {object} Application configuration (used to extract the
  *                        repository monitor configuration and push hook).
  */
 function handlePushEvent(payload, config) {
-    var repoSlug = payload.repository.organization 
+    var repoSlug = payload.repository.organization
             + '/' + payload.repository.name,
         branch = payload.ref.split('/').pop(),
         monitorConfig = config.monitors[repoSlug],
         pushHooks = getPushHooksForMonitor(monitorConfig);
-    log('Github push event on ' + repoSlug + '/' + branch);
+    log.log('Github push event on ' + repoSlug + '/' + branch);
     // Only process pushes to master, and only when there is a push hook defined.
     if (branch == 'master') {
         _.each(pushHooks, function(hookCmd) {
@@ -223,7 +237,7 @@ function handlePushEvent(payload, config) {
  * Given all the RepositoryClient objects, this module initializes all the dynamic
  * validators and returns a request handler function to handle all Github web hook
  * requests, including status updates and pull request notifications.
- * @param clients {RepositoryClient[]} Every RepositoryClient for each repo 
+ * @param clients {RepositoryClient[]} Every RepositoryClient for each repo
  *                                     being monitored.
  * @param config {object} Application configuration.
  */
@@ -245,7 +259,7 @@ function initializer(clients, config) {
 
         if (payload.name) {
             repoName = payload.name;
-        } else if (payload.repository.full_name) {
+        } else if (payload.repository && payload.repository.full_name) {
             repoName = payload.repository.full_name;
         } else if (payload.repository) {
             // Probably a push event.
@@ -258,19 +272,19 @@ function initializer(clients, config) {
 
         repoClient = repoClients[repoName];
 
-        // If this application is not monitoring the repo Github is telling us 
+        // If this application is not monitoring the repo Github is telling us
         // about, just ignore it.
         if (! repoClient) {
             log.warn('No repository client available for ' + repoName);
             return res.end();
         }
-        
+
         log.verbose("Github hook executing for " + repoClient.toString().magenta);
 
         function whenDone(err) {
             if (err) {
                 log.error(err);
-                log(payload);
+                log.log(payload);
             }
             res.end();
         }
@@ -288,22 +302,27 @@ function initializer(clients, config) {
                     sha, payload.state, payload.branches, repoClient, whenDone
                 );
             }
-        } 
+        }
         // If the payload has a 'pull_request', well that means this is a pull
         // request.
         else if (payload.pull_request) {
             log.debug('** Handle Pull Request Update **');
             handlePullRequest(
-                payload.action, 
-                payload.pull_request, 
-                repoClient, 
+                payload.action,
+                payload.pull_request,
+                repoClient,
                 whenDone
             );
         }
         // Assuming everything else is a push event.
-        else {
+        else if (payload.ref) {
             log.debug('** Handle Push Event **')
             handlePushEvent(payload, config);
+            whenDone();
+        } else {
+            log.error('** Unknown GitHub Webhook Payload! **');
+            log.error(payload);
+            whenDone();
         }
     };
 }

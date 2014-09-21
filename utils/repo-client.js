@@ -1,7 +1,7 @@
 var GitHubApi = require('github'),
     Travis = require('travis-ci'),
     _ = require('underscore'),
-    log = require('./log'),
+    log = require('./logger').logger,
     RepositoryClient;
 
 /**
@@ -38,7 +38,7 @@ function RepositoryClient(config) {
 }
 
 RepositoryClient.prototype.merge = function(head, base, callback) {
-    log('merging ' + head + ' into ' + base + '...');
+    log.log('merging ' + head + ' into ' + base + '...');
     this.github.repos.merge({
         user: this.org,
         repo: this.repo,
@@ -116,6 +116,13 @@ RepositoryClient.prototype.getCommit = function(sha, callback) {
     }, callback);
 };
 
+RepositoryClient.prototype.rateLimit = function(callback) {
+    this.github.misc.rateLimit({
+        user: this.org,
+        repo: this.repo
+    }, callback);
+}
+
 RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback) {
     var me = this;
     this.github.repos.getHooks({
@@ -135,7 +142,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             me.github.repos.createHook({
                 user: me.org,
                 repo: me.repo,
-                name: 'web', 
+                name: 'web',
                 config: {
                     url: url
                 },
@@ -154,7 +161,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
 
 RepositoryClient.prototype.triggerTravisForPullRequest = function(pull_request_number, callback) {
     var travis = this.travis;
-    log.debug('Attempting to trigger a build for' + this.toString() 
+    log.debug('Attempting to trigger a build for' + this.toString()
         + ' PR#' + pull_request_number);
     travis.builds({
         slug: this.getRepoSlug(),
@@ -166,7 +173,7 @@ RepositoryClient.prototype.triggerTravisForPullRequest = function(pull_request_n
         if (! pr) {
             return callback(new Error('No pull request with #' + pull_request_number));
         }
-        log("Triggering build restart for PR#" + pull_request_number);
+        log.log("Triggering build restart for PR#" + pull_request_number);
         travis.builds.restart({ id: pr.id }, function(err, restartResp) {
             if (err) return callback(err);
             callback(null, restartResp.result)

@@ -1,5 +1,5 @@
 var assert = require('assert'),
-    shaValidator = require('./../utils/shaValidator.js')
+    shaValidator = require('./../utils/sha-validator.js')
     repoClientStub = {
         'getAllStatusesFor': function(sha, callback) { callback(null, 'fakeStatusHistory'); },
         'validators': {
@@ -16,7 +16,7 @@ var assert = require('assert'),
         {
             'name': 'FirstValidator',
             'priority': 1,
-            'validate': function(sha, githubUser, statusHistory, repoClient, callback) { 
+            'validate': function(sha, githubUser, statusHistory, repoClient, callback) {
                 assert.equal(sha, 'testSHA', 'in FirstValidator.validate :  wrong sha!');
                 assert.equal(githubUser, 'carlfriess', 'in FirstValidator.validate :  wrong githubUser!');
                 assert.equal(statusHistory, 'fakeStatusHistory', 'in FirstValidator.validate :  wrong statusHistory!');
@@ -29,7 +29,7 @@ var assert = require('assert'),
         {
             'name': 'SecondValidator',
             'priority': 0,
-            'validate': function(sha, githubUser, statusHistory, repoClient, callback) { 
+            'validate': function(sha, githubUser, statusHistory, repoClient, callback) {
                 assert.equal(sha, 'testSHA', 'in SecondValidator.validate :  wrong sha!');
                 assert.equal(githubUser, 'carlfriess', 'in SecondValidator.validate :  wrong githubUser!');
                 assert.equal(statusHistory, 'fakeStatusHistory', 'in SecondValidator.validate :  wrong statusHistory!');

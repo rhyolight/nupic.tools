@@ -45,25 +45,23 @@ echo Deleting any existing local branch for this SHA...
 git branch -D core-update-${SHA}
 git checkout -b core-update-${SHA}
 
-# I'm afraid this is not working the way I expected, because the PR created seems to 
-# contain a bunch more changes than just the SHA update
-
-# echo Pulling changes from existing remote update branch...
-# git merge origin/core-update-sha --no-edit --strategy-option theirs
-
-# Replacing previous commented-out logic with this to test it out.
 echo Deleting existing remote branch core-update-sha
 git push origin :core-update-sha
 
+echo Fetching existing SHA...
+EXISTING_SHA=`grep -oh "[0-9a-f]\{40\}" .nupic_modules`
+
 echo Replacing existing SHA in .nupic_modules with ${SHA}...
-sed -i -e "s#[0-9a-f]\{40\}#$SHA#g" .nupic_modules
+sed -i -e "s#${EXISTING_SHA}#${SHA}#g" .nupic_modules
 git add .nupic_modules
 echo Committing new .nupic_modules file...
 git commit -m "Updates nupic.core to ${SHA}."
 echo Pushing to remote branch...
 git push origin core-update-${SHA}:core-update-sha
 echo Attempting pull request creation...
-hub pull-request -m "Updates nupic.core to latest built SHA." -h "numenta-ci/nupic:core-update-sha" -b "numenta/nupic:master"
+hub pull-request -m "Updates nupic.core to latest built SHA.
+
+See https://github.com/numenta/nupic.core/compare/${SHA}...${EXISTING_SHA} for details." -h "numenta-ci/nupic:core-update-sha" -b "numenta/nupic:master"
 echo Back to master branch.
 git checkout master
 

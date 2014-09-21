@@ -34,7 +34,7 @@ describe('general utilities', function() {
                     return ['a.js','b.js','c.js','d.js','e.js']
                 }
             },
-            './repoClient': {}
+            './repo-client': {}
         });
         it('loads all modules within directory', function() {
             var initialized = general.initializeModulesWithin('mockDir');
@@ -99,12 +99,16 @@ describe('general utilities', function() {
                 repoClientConfigs[config.repository] = config;
             },
             general = proxyquire('./../../utils/general', {
-                './repoClient': MockRepoClientClass
+                './repo-client': MockRepoClientClass
             });
 
         // Mock out the webhook confirmation.
         MockRepoClientClass.prototype.confirmWebhookExists = function(_, _, cb) {
             cb();
+        };
+        // Mock out rateLimit
+        MockRepoClientClass.prototype.rateLimit = function(cb) {
+            cb(null, {rate: {remaining: 1000, reset: new Date().getTime()}});
         };
 
         it('does not duplicate validator exclusions', function(done) {

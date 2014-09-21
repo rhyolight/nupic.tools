@@ -1,5 +1,5 @@
 var contribUtil = require('../utils/contributors'),
-    log = require('../utils/log');
+    log = require('../utils/logger').logger;
 
 function isContributor(name, roster) {
     if (name == null || name == undefined) return false;
@@ -12,7 +12,7 @@ function isContributor(name, roster) {
 }
 
 function validator(sha, githubUser, _, githubClient, callback) {
-    log('Validating contributor "' + githubUser + '"...');
+    log.log('Validating contributor "' + githubUser + '"...');
     if (githubUser == githubClient.user) {
         // The Github user assigned as the API client would always pass validation.
         callback(null, {state: 'success'})

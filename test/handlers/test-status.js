@@ -1,15 +1,18 @@
 var assert = require('assert'),
+    expect = require('chai').expect,
+    path = require('path'),
+    fs = require('fs'),
     urlMap = require('../../handlers/status');
 
 describe('status reporter url mapping', function() {
     it('has an entry for the /status URL', function() {
-        assert(Object.keys(urlMap).indexOf('/status') > -1, 
+        assert(Object.keys(urlMap).indexOf('/status*') > -1,
             'handler does not have proper url mapping');
     });
 });
 
 describe('/status URL handler', function() {
-    var initializer = urlMap['/status'];
+    var initializer = urlMap['/status*'];
 
     it('is a function with title and description', function() {
         var handler = initializer();
@@ -23,46 +26,44 @@ describe('/status URL handler', function() {
 
 describe('status reporter', function() {
     it('creates proper status report html', function() {
-        var expectedHtml = "<html><body>\n" +
-            "<h1>nupic.tools is alive</h1>\n" +
-            "<h3>This server is monitoring the following repositories:</h3><ul>\n" +
-            "<li><a target=\"_blank\" href=\"http://github.com/clientA/\">http://github.com/clientA</a></li>" +
-            "<li><a target=\"_blank\" href=\"http://github.com/clientB/\">http://github.com/clientB</a></li>\n" +
-            "</ul>\n" +
-            "<h3>The following validators are active:</h3><ul>\n" +
-            "<li>validatorA</li><li>validatorB</li>\n" +
-            "</ul>\n" +
-            "<h3>Available add-on services:</h3><ul>\n" +
-            "<li><a target=\"_blank\" href=\"/handlerA\">handlerA</a>: handlerA-description</li>" +
-            "<li><a target=\"_blank\" href=\"/handlerB\">handlerB</a>: handlerB-description</li>\n" +
-            "</ul>\n" +
-            "</body></html>";
-        var mockRepoClients = {'clientA': 0, 'clientB': 1},
-            handlerA = function() {}, 
-            handlerB = function() {}
+        var expectedHtml = fs.readFileSync(path.join(__dirname, '../mockData/mock-status.html'), 'utf-8');
+        // Remove all whitespace for comparison.
+        expectedHtml = expectedHtml.replace(/\s+/g, '');
+        function mockRateLimit(cb) {
+            cb(null, {rate: {remaining: 5000}});
+        }
+        var mockRepoClients = {
+                'clientA': {rateLimit:mockRateLimit},
+                'clientB': {rateLimit:mockRateLimit}
+            },
+            handlerA = function() {},
+            handlerB = function() {},
             mockHttpHandlers = [{
-                "/handlerA": function() { return handlerA; }
-            }, {
-                "/handlerB": function() { return handlerB; }
+                    "/handlerA*": function() { return handlerA; }
+                }, {
+                    "/handlerB*": function() { return handlerB; }
             }],
             mockConfig = {},
             mockValidators = ['validatorA', 'validatorB'],
             endCalled = false;
         handlerA.title = 'handlerA';
         handlerA.description = 'handlerA-description';
+        handlerA.url = '/handlerA';
         handlerB.title = 'handlerB';
         handlerB.description = 'handlerB-description';
-        var requestHandler = urlMap['/status'](
+        handlerB.url = '/handlerB';
+        var requestHandler = urlMap['/status*'](
             mockRepoClients, mockHttpHandlers, mockConfig, mockValidators
         );
         var mockRequest = {
-            url: '/bluah/bluah/status'
+            url: '/bluah/bluah/status*'
         };
         var mockResponse = {
             setHeader: function() {},
             end: function(htmlOut) {
                 endCalled = true;
-                assert.equal(expectedHtml, htmlOut);
+                // Compare strings after stripping whitespace.
+                expect(htmlOut.replace(/\s+/g, '')).to.equal(expectedHtml);
             }
         };
         requestHandler(mockRequest, mockResponse);

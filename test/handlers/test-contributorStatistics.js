@@ -1,10 +1,10 @@
 var assert = require('assert'),
-    RepositoryClient = require('../../utils/repoClient'),
+    RepositoryClient = require('../../utils/repo-client'),
     proxyquire = require('proxyquire'),
     sinon = require('sinon'),
     jsonUtils = require('../../utils/json'),
     jsonMock = {},
-    urlMap = proxyquire('../../handlers/contributorStatistics', {
+    urlMap = proxyquire('../../handlers/contributor-statistics', {
         '../utils/json': jsonMock
     });
 
@@ -14,15 +14,15 @@ function resetJsonMock() {
 }
 
 describe('contributor handler url mapping', function() {
-    it('has an entry for the /contribStats URL', function() {
-        assert(Object.keys(urlMap).indexOf('/contribStats') > -1, 
+    it('has an entry for the /contribStats* URL', function() {
+        assert(Object.keys(urlMap).indexOf('/contribStats*') > -1,
             'handler does not have proper url mapping');
     });
 });
 
-describe('/contributStats request handler initializer', function() {
+describe('/contribStats request handler initializer', function() {
     it('throws appropriate error when initialized without repo clients', function() {
-        var initializer = urlMap['/contribStats'];
+        var initializer = urlMap['/contribStats*'];
         try {
             initializer();
             assert.fail('initializer should have thrown an error');
@@ -33,7 +33,7 @@ describe('/contributStats request handler initializer', function() {
 });
 
 describe('/contribStats URL handler', function() {
-    var initializer = urlMap['/contribStats'];
+    var initializer = urlMap['/contribStats*'];
     var mockRepos = {
         'repoOne': sinon.createStubInstance(RepositoryClient),
         'repoTwo': sinon.createStubInstance(RepositoryClient)

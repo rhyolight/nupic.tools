@@ -36,9 +36,10 @@ shaReporter.title = 'SHA Reporter';
 shaReporter.description = 
     'Returns the status of a SHA, give the "sha" and "repo" query parameters. ' + 
     'The repo should be "organization/repository".';
+shaReporter.url = '/shaStatus';
 
 module.exports = {
-    '/shaStatus': function(_repoClients) {
+    '/shaStatus*': function(_repoClients) {
         repoClients = _repoClients;
         return shaReporter;
     }

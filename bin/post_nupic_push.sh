@@ -47,7 +47,7 @@ echo
 echo "Checking out numenta/nupic master branch for doxygen build..."
 git checkout master
 git pull upstream master
-doxygen
+doxygen docs/Doxyfile
 
 cwd=`pwd`
 cd $NUPIC_CORE

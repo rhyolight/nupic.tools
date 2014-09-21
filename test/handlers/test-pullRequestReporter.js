@@ -1,27 +1,22 @@
 var assert = require('assert'),
-    RepositoryClient = require('../../utils/repoClient'),
+    RepositoryClient = require('../../utils/repo-client'),
     proxyquire = require('proxyquire'),
     sinon = require('sinon'),
     jsonUtils = require('../../utils/json'),
     jsonMock = {},
-    urlMap = proxyquire('../../handlers/pullRequestReporter', {
+    urlMap = proxyquire('../../handlers/pull-request-reporter', {
         '../utils/json': jsonMock
     });
 
-// function resetJsonMock() {
-//     jsonMock.render = undefined;
-//     jsonMock.renderErrors = undefined;
-// }
-
 describe('pull request report handler url mapping', function() {
-    it('has an entry for the /prStatus URL', function() {
-        assert(Object.keys(urlMap).indexOf('/prStatus') > -1, 
+    it('has an entry for the /prStatus* URL', function() {
+        assert(Object.keys(urlMap).indexOf('/prStatus*') > -1,
             'handler does not have proper url mapping');
     });
 });
 
-describe('/prStatus URL handler', function() {
-    var initializer = urlMap['/prStatus'];
+describe('/prStatus* URL handler', function() {
+    var initializer = urlMap['/prStatus*'];
     var mockRepos = {
         'repoOne': sinon.createStubInstance(RepositoryClient),
         'repoTwo': sinon.createStubInstance(RepositoryClient)

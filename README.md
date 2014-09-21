@@ -19,7 +19,7 @@ First, install nodejs and npm. Checkout this codebase and change into the `nupic
 
 ### Configuration
 
-Default configuration settings are in the `./conf/config.json` file. To provide these instance-level settings, create a new config file using the username of the logged-in user. For example, mine is called `./conf/config-rhyolight.json`. This is where you'll keep your instance configuration settings, like your production `host` and `port`. You can also add as many `monitors` as you wish. The key for each monitor should be the Github organization/repository name.
+Default configuration settings are in the `./conf/config.yml` file. To provide instance-level settings, create a new config file using the username of the logged-in user. For example, mine is called `./conf/config-rhyolight.yml`. This is where you'll keep your instance configuration settings, like your production `host` and `port`. You can also add as many `monitors` as you wish. The key for each monitor should be the Github organization/repository name.
 
 #### Monitors
 

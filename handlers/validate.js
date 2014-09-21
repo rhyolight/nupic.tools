@@ -2,7 +2,7 @@ var fs = require('fs'),
     path = require('path'),
     url = require('url'),
     qs = require('querystring'),
-    shaValidator = require('../utils/shaValidator'),
+    shaValidator = require('../utils/sha-validator'),
     contributors = require('../utils/contributors'),
     jsonUtils = require('../utils/json'),
     VALIDATOR_DIR = 'validators',
@@ -51,11 +51,8 @@ function validateSha(req, res) {
         repoClient = repoClients[repo],
         errors = [];
 
-    if (query.postStatus == '1' || query.postStatus.toLowerCase() == 'true') {
-        postStatus = true;
-    } else {
-        postStatus = false;
-    }
+    postStatus = query.postStatus
+        && (query.postStatus == '1' || query.postStatus.toLowerCase() == 'true');
 
     if (! sha) {
         errors.push(new Error('Missing "sha" query parameter.'));
@@ -98,9 +95,10 @@ validateSha.title = 'SHA Validator';
 validateSha.description = 'Given a "sha" parameter, forces a complete ' +
     'validation and reports results. To post validation results to github, ' +
     'specify "postStatus=1" in URL params.';
+validateSha.url = '/validate';
 
 module.exports = {
-    '/validate': function(_repoClients) {
+    '/validate*': function(_repoClients) {
         repoClients = _repoClients;
         return validateSha;
     }
