@@ -166,48 +166,6 @@ function getBuildHooksForMonitor(monitorConfig) {
 }
 
 /**
- * Post status for non-mergeable pull request
- * 
- * @note
- *      This function is no longer used, because a similar feature is provided by Github.
- *      Please refer to https://github.com/numenta/nupic.tools/issues/145 for context.
- * 
- */
-function postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient) {
-    log.log('The PR is not mergeable, mergeable_state: ' + pullRequest.mergeable_state);
-
-    var headBranch = pullRequest.head.label,
-        baseBranch = pullRequest.base.label,
-        warningMessage, targetUrl, statusDetails;
-
-    // A warning message about the mergeable state of this PR.
-    warningMessage = 'Please merge `' +
-        baseBranch + '` into `' + headBranch + '` and resolve merge conflicts.';
-
-    // Avoid "description is too long (maximum is 140 characters)"
-    if (warningMessage.length >= 140) {
-        warningMessage = "Please merge master into this pull request and resolve merge conflicts.";
-    }
-
-    // Construct a url to compare what's missing in this PR.
-    targetUrl = pullRequest.base.repo.html_url +
-        '/compare/' + headBranch + '...' + baseBranch +
-        // jump to the commit log in the comparison,
-        // skip the creating PR part to avoid confusion
-        '#commits_bucket';
-
-    statusDetails = {
-        state: 'error',
-        description: warningMessage,
-        target_url: targetUrl
-    };
-
-    // Post the status banner on PR.
-    // https://developer.github.com/v3/repos/statuses/#create-a-status
-    shaValidator.postNewNupicStatus(sha, statusDetails, repoClient);
-}
-
-/**
  * Handles an event from Github that indicates that a PR has been merged into one
  * of the repositories. This could trigger a script to run locally in response,
  * called a "push hook", which are defined in the configuration of each repo as
