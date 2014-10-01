@@ -42,19 +42,31 @@ function mailingListReporter (request, response) {
         totalSubscribers : 0,
         totalMessages : 0
     };
+    var allSubjects = [];
     config.mailinglists.forEach(function(mailingList) {
-        getMailingList(mailingList,screenScrapes,data.mailingLists);
+        getMailingList(mailingList,screenScrapes,data.mailingLists, allSubjects);
     });
     q.all(screenScrapes).then(function(){
         data.mailingLists.forEach(function(ml){
             data.totalSubscribers += ml.subscribers;
             data.totalMessages += ml.messages.total;
         });
+        logger.verbose(
+            allSubjects.join(' ')
+                .replace(/\[nupic\]/g, '')
+                .replace(/答复\:/g, '')
+                .replace(/Re\:/gi, '')
+                .replace(/\b\d+\b/g, '')
+                .replace(/\[nupic\-discuss\]/g, '')
+                .replace(/\[nupic\-hackers\]/g, '')
+                .replace(/\[nupic\-theory\]/g, '')
+                .replace(/\[nupic\-dev\]/g, '')
+        );
         buildOutput(request, response, data);
     });
 }
 
-function getMailingList (mailingList,screenScrapes,data) {
+function getMailingList (mailingList,screenScrapes,data, subjects) {
 
         var numberSubsHTML;
         var numberSubsNoDigest;
@@ -99,6 +111,13 @@ function getMailingList (mailingList,screenScrapes,data) {
                     temp.number = (temp.number < 0) ? 0 : temp.number;
                     mailingListData.messages.byMonth[url.arrayPos] = temp;
                     mailingListData.messages.total += (window.$("a").length-10)/2;
+
+                    var $titles = window.$('ul').eq(1).find('li a:nth-child(1)')
+                    $titles.each(function() {
+                        var html = window.$(this).html();
+                        subjects.push(html);
+                    });
+
                 }
                 deferred.resolve(true);
             });
