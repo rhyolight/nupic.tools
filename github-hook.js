@@ -49,20 +49,14 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
 
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
             if (external) {
-                // only runs validation if the PR is mergeable
-                if(pullRequest.mergeable) {
-                    shaValidator.performCompleteValidation(
-                        sha,
-                        githubUser,
-                        repoClient,
-                        dynamicValidatorModules,
-                        true,
-                        cb
-                    );
-                } else {
-                    postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient);
-                    if (cb) { cb(); }
-                }
+                shaValidator.performCompleteValidation(
+                    sha,
+                    githubUser,
+                    repoClient,
+                    dynamicValidatorModules,
+                    true,
+                    cb
+                );
             } else {
                 // ignore statuses that were created by this server
                 // TODO it should never get into this branch, but it's seen in production
@@ -169,44 +163,6 @@ function getPushHooksForMonitor(monitorConfig) {
 
 function getBuildHooksForMonitor(monitorConfig) {
     return getHooksForMonitorForType('build', monitorConfig);
-}
-
-/**
- * Post status for non-mergeable pull request
- *
- */
-function postStatusForNonMergeablePullRequest(sha, pullRequest, repoClient) {
-    log.log('The PR is not mergeable, mergeable_state: ' + pullRequest.mergeable_state);
-
-    var headBranch = pullRequest.head.label,
-        baseBranch = pullRequest.base.label,
-        warningMessage, targetUrl, statusDetails;
-
-    // A warning message about the mergeable state of this PR.
-    warningMessage = 'Please merge `' +
-        baseBranch + '` into `' + headBranch + '` and resolve merge conflicts.';
-
-    // Avoid "description is too long (maximum is 140 characters)"
-    if (warningMessage.length >= 140) {
-        warningMessage = "Please merge master into this pull request and resolve merge conflicts.";
-    }
-
-    // Construct a url to compare what's missing in this PR.
-    targetUrl = pullRequest.base.repo.html_url +
-        '/compare/' + headBranch + '...' + baseBranch +
-        // jump to the commit log in the comparison,
-        // skip the creating PR part to avoid confusion
-        '#commits_bucket';
-
-    statusDetails = {
-        state: 'error',
-        description: warningMessage,
-        target_url: targetUrl
-    };
-
-    // Post the status banner on PR.
-    // https://developer.github.com/v3/repos/statuses/#create-a-status
-    shaValidator.postNewNupicStatus(sha, statusDetails, repoClient);
 }
 
 /**
