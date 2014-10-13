@@ -61,7 +61,7 @@ git push origin core-update-${SHA}:core-update-sha
 echo Attempting pull request creation...
 hub pull-request -m "Updates nupic.core to latest built SHA.
 
-See https://github.com/numenta/nupic.core/compare/${SHA}...${EXISTING_SHA} for details." -h "numenta-ci/nupic:core-update-sha" -b "numenta/nupic:master"
+See https://github.com/numenta/nupic.core/compare/${EXISTING_SHA}...${SHA} for details." -h "numenta-ci/nupic:core-update-sha" -b "numenta/nupic:master"
 echo Back to master branch.
 git checkout master
 
