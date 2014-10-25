@@ -125,12 +125,14 @@ RepositoryClient.prototype.rateLimit = function(callback) {
 
 RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback) {
     var me = this;
+    console.log('%s/%s web hook check', this.org, this.repo);
     this.github.repos.getHooks({
         user: this.org,
         repo: this.repo
     }, function(err, hooks) {
         var found = false;
         if (err) {
+            console.error(err);
             return callback(err);
         }
         hooks.forEach(function(hook) {

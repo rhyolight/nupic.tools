@@ -40,7 +40,8 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
     logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
     logger.info('nupic.tools server starting...');
     logger.info('nupic.tools will use the following configuration:');
-    logger.debug('nupic.tools configuration', utils.sterilizeConfig(cfg));
+    logger.debug('nupic.tools configuration:');
+    console.log(utils.sterilizeConfig(cfg));
 
     // enable web server logging; pipe those log messages through our logger
     logStream = {
