@@ -27,11 +27,14 @@
   #           specified repository.
   hooks:
     numenta/nupic:
-      push: "~/nupic.tools/bin/post_nupic_push.sh"
-      build: "~/nupic.tools/bin/post_nupic_build.sh"
+      push: "bin/post_nupic_push.sh"
+      build: "bin/post_nupic_build.sh"
 
     numenta/nupic.core:
       push: "bin/post_nupic.core_push.sh"
+
+    numenta/htm.java:
+      push: "bin/post_htm.java_push.sh"
 
   # Details about each of our mailing lists.
   mailinglists:
