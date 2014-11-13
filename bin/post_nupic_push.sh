@@ -69,7 +69,7 @@ mv $NUPIC_CORE/html $NUMENTA_ORG/docs/nupic.core
 # add new docs
 git add docs
 # commit new docs
-git commit -m "NuPIC Doxygen automated doc build."
+git commit -m "NuPIC automated doc build for nupic & nupic.core."
 # push new docs
 git push upstream gh-pages
 
