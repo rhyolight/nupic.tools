@@ -40,7 +40,7 @@ cd $HTM_JAVA
 echo
 echo "Checking out numenta/htm.java master branch for javadoc build..."
 git checkout master
-git pull upstream master
+git pull origin master
 ./jdoc.sh
 
 echo "Checking out numenta/numenta.org gh-pages branch for documentation push..."
