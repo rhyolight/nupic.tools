@@ -1,13 +1,19 @@
 #!/bin/bash
 
-# start the ssh-agent in the background
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+echo "Starting SSH agent..."
 eval "$(ssh-agent -s)"
+echo "Adding docker key..."
 ssh-add /keys/docker
-# Manually set up authorized_keys
+echo "Setting up local .ssh directory..."
 mkdir ~/.ssh
 chmod 700 ~/.ssh
+echo "Adding docker key to authorized_keys..."
 cat /keys/docker.pub > ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
+echo "Testing connection to GitHub..."
+ssh -o StrictHostKeyChecking=no -T git@github.com
 
 if [ -z "$NUPIC" ]; then
     echo "In order for this script to run properly, you must have the "
@@ -46,25 +52,37 @@ if [ -z "$NUMENTA_ORG" ]; then
 fi
 
 cd ${NUPIC}
-git remote set-url git@github.com:numenta/nupic.git
+printf "\nSyncing nupic..."
+git remote set-url origin git@github.com:numenta/nupic.git
 git pull origin master
 
 cd ${NUPIC_CORE}
-git remote set-url git@github.com:numenta/nupic.core.git
+printf "\nSyncing nupic.core..."
+git remote set-url origin git@github.com:numenta/nupic.core.git
 git pull origin master
 
+printf "\nSyncing nupic.regression..."
 cd ${NUPIC_REGRESSION}
-git remote set-url git@github.com:numenta/nupic.regression.git
+git remote set-url origin git@github.com:numenta/nupic.regression.git
 git pull origin master
 
+printf "\nSyncing nupic.research..."
 cd ${NUPIC_RESEARCH}
 git remote set-url origin git@github.com:numenta/nupic.research.git
 git pull origin master
 
+printf "\nSyncing htm.java..."
 cd ${HTM_JAVA}
-git remote set-url git@github.com:numenta/htm.java.git
+git remote set-url origin git@github.com:numenta/htm.java.git
 git pull origin master
 
+printf "\nSyncing numenta.org..."
 cd ${NUMENTA_ORG}
-git remote set-url git@github.com:numenta/numenta.org.git
+git remote set-url origin git@github.com:numenta/numenta.org.git
 git pull origin gh-pages
+
+printf "\n\nStarting nupic.tools server..."
+cd /src
+ls -la
+which node
+node program.js

@@ -83,3 +83,15 @@ The NuPIC project uses this functionality to run a script that generates API doc
 ## Make sure it stays running!
 
 Installing this package will also install the [forever](https://npmjs.org/package/forever) module globally. Scripts are provided within `./bin` to start, stop, and restart this program as a forever application.
+
+# Using Docker
+
+To build a docker image:
+
+    docker build -t nupic.tools .
+
+To run the image:
+
+    docker run -v /local/path/to/ssh/keys:/keys -e "GH_USERNAME=<LOGIN>" -e "GH_PASSWORD=<PASSWORD>" -i nupic.tools
+
+`nupic.tools` requires authentication with git over SSH. In order to run in a docker container, you MUST map SSH keys for a GitHub user at `/local/path/to/ssh/keys`. Both the public and private keys must be in this directory, and be called `docker` and `docker.pem` respectively. This SSH key must match the GitHub username and password passed in with the `-e` option as environment variables. This user must have write access to NuPIC repositories, and it is expected to be the [numenta-ci](https://github.com/numenta-ci) user. 
