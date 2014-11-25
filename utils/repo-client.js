@@ -4,6 +4,10 @@ var GitHubApi = require('github'),
     log = require('./logger').logger,
     RepositoryClient;
 
+function arrayContainsArray(left, right) {
+    return _.intersection(left, right).length == right.length;
+}
+
 /**
  * An interface to the Github repository. Uses the Github API.
  */
@@ -121,11 +125,11 @@ RepositoryClient.prototype.rateLimit = function(callback) {
         user: this.org,
         repo: this.repo
     }, callback);
-}
+};
 
 RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback) {
     var me = this;
-    console.log('%s/%s web hook check', this.org, this.repo);
+    log.verbose('%s/%s web hook check', this.org, this.repo);
     this.github.repos.getHooks({
         user: this.org,
         repo: this.repo
@@ -136,11 +140,13 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             return callback(err);
         }
         hooks.forEach(function(hook) {
-            if (hook.config && url == hook.config.url) {
+            if (hook.config && url == hook.config.url && arrayContainsArray(hook.events, events)) {
+                log.verbose(hook.config.url);
                 found = true;
             }
         });
         if (! found) {
+            log.debug('Creating web hook for "%s"', events.join(', '));
             me.github.repos.createHook({
                 user: me.org,
                 repo: me.repo,
