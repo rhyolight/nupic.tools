@@ -34,8 +34,8 @@ function requestHandler(req, res) {
 }
 
 function initializer(_repoClients, _httpHandlers, config, activeValidators) {
-    var ghUsername = config.monitors['numenta/nupic'].username,
-        ghPassword = config.monitors['numenta/nupic'].password;
+    var ghUsername = config.monitors[_.keys(config.monitors)[0]].username,
+        ghPassword = config.monitors[_.keys(config.monitors)[0]].password;
     gh = new GitHubApi({
         version: '3.0.0',
         timeout: 5000
