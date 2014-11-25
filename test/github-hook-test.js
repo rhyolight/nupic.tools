@@ -148,7 +148,7 @@ describe('github hook handler', function() {
                 build: ['build hook 1', 'build hook 2']
             },
             getCommit: function() {}
-        }}
+        }};
         handler = githubHook.initializer(mockClients, 'mockConfig');
         var mockPayload = require('./github_payloads/status_master_build_success'),
             mockRequest = {
@@ -164,6 +164,7 @@ describe('github hook handler', function() {
         assert.equal(executedHookCommands.length, 2, 'Wrong number of hook commands executed.');
         assert.equal(executedHookCommands[0], 'build hook 1', 'Wrong hook command executed on master build success.');
         assert.equal(executedHookCommands[1], 'build hook 2', 'Wrong hook command executed on master build success.');
+
         // Reset just in case further tests use them.
         validationPerformed = undefined;
         validatedSHA = undefined;
@@ -172,5 +173,38 @@ describe('github hook handler', function() {
         validationPosted = undefined;
         executedHookCommands = [];
     });
+
+    it('calls one build hook command on tag event', function(done) {
+        mockClients = {'numenta/experiments': {
+            hooks: {
+                tag: 'tag hook'
+            }
+        }};
+        handler = githubHook.initializer(mockClients, 'mockConfig');
+
+        var mockPayload = require('./github_payloads/experiments_tag'),
+            mockRequest = {
+                body: {
+                    payload: JSON.stringify(mockPayload)
+                }
+            };
+
+        handler(mockRequest, {end: done});
+
+        assert(!validationPerformed, 'validation against PR should not be performed on successful master build.');
+        assert(!validationPosted, 'validation status should not be posted on successful master build.');
+        assert.equal(executedHookCommands.length, 1, 'Wrong number of hook commands executed.');
+        assert.equal(executedHookCommands[0], 'tag hook', 'Wrong hook command executed on master build success.');
+
+        // Reset just in case further tests use them.
+        validationPerformed = undefined;
+        validatedSHA = undefined;
+        validatedUser = undefined;
+        validatorsUsed = undefined;
+        validationPosted = undefined;
+        executedHookCommands = [];
+
+    });
+
 
 });
