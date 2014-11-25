@@ -29,6 +29,7 @@
     numenta/nupic:
       push: "bin/post_nupic_push.sh"
       build: "bin/post_nupic_build.sh"
+      tag: "bin/post_nupic_tag.sh"
 
     numenta/nupic.core:
       push: "bin/post_nupic.core_push.sh"
