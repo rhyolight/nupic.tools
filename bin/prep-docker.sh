@@ -51,38 +51,36 @@ if [ -z "$NUMENTA_ORG" ]; then
     exit 1
 fi
 
-cd ${NUPIC}
-printf "\nSyncing nupic..."
-git remote set-url origin git@github.com:numenta/nupic.git
-git pull origin master
+# cd ${NUPIC}
+# printf "\nSyncing nupic..."
+# git remote set-url origin git@github.com:numenta/nupic.git
+# git pull origin master
 
-cd ${NUPIC_CORE}
-printf "\nSyncing nupic.core..."
-git remote set-url origin git@github.com:numenta/nupic.core.git
-git pull origin master
+# cd ${NUPIC_CORE}
+# printf "\nSyncing nupic.core..."
+# git remote set-url origin git@github.com:numenta/nupic.core.git
+# git pull origin master
 
-printf "\nSyncing nupic.regression..."
-cd ${NUPIC_REGRESSION}
-git remote set-url origin git@github.com:numenta/nupic.regression.git
-git pull origin master
+# printf "\nSyncing nupic.regression..."
+# cd ${NUPIC_REGRESSION}
+# git remote set-url origin git@github.com:numenta/nupic.regression.git
+# git pull origin master
 
-printf "\nSyncing nupic.research..."
-cd ${NUPIC_RESEARCH}
-git remote set-url origin git@github.com:numenta/nupic.research.git
-git pull origin master
+# printf "\nSyncing nupic.research..."
+# cd ${NUPIC_RESEARCH}
+# git remote set-url origin git@github.com:numenta/nupic.research.git
+# git pull origin master
 
-printf "\nSyncing htm.java..."
-cd ${HTM_JAVA}
-git remote set-url origin git@github.com:numenta/htm.java.git
-git pull origin master
+# printf "\nSyncing htm.java..."
+# cd ${HTM_JAVA}
+# git remote set-url origin git@github.com:numenta/htm.java.git
+# git pull origin master
 
-printf "\nSyncing numenta.org..."
-cd ${NUMENTA_ORG}
-git remote set-url origin git@github.com:numenta/numenta.org.git
-git pull origin gh-pages
+# printf "\nSyncing numenta.org..."
+# cd ${NUMENTA_ORG}
+# git remote set-url origin git@github.com:numenta/numenta.org.git
+# git pull origin gh-pages
 
 printf "\n\nStarting nupic.tools server..."
 cd /src
-ls -la
-which node
 node program.js
