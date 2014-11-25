@@ -56,18 +56,8 @@ function read(configFile, callback) {
         userConfig = null;
 
     userConfig = readConfigFileIntoObject(userFile);
-    // Fail now if there is no repos_url.
-    if (! config.repos_url) {
-        return callback(Error('Configuration is missing "repos_url".'));
-    }
 
-    request.get(config.repos_url, function(err, resp, body) {
-        var repos;
-        if (err) {
-            return callback(err);
-        }
-
-        repos = yaml.safeLoad("---\n" + body).repos;
+    function processReposConfig(repos) {
         config.repos = repos;
 
         if (userConfig) {
@@ -86,7 +76,27 @@ function read(configFile, callback) {
             config.hooks, config.contributors);
 
         callback(null, config);
-    });
+    }
+
+    // A local repos config overrides the URL to a global one (for testing)
+    if (config.repos) {
+        processReposConfig(config.repos);
+    } else {
+        // Fail now if there is no repos_url.
+        if (! config.repos_url) {
+            return callback(Error('Configuration is missing "repos_url".'));
+        }
+        request.get(config.repos_url, function(err, resp, body) {
+            var repos;
+            if (err) {
+                return callback(err);
+            }
+
+            repos = yaml.safeLoad("---\n" + body).repos;
+            processReposConfig(repos);
+        });
+    }
+
 }
 
 // Fail fast.
