@@ -105,7 +105,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         // Now confirm all webhooks are ready.
         _.each(uncheckedClients, function(repoClient, i) {
             var monitorKey = monitorKeys[i];
-            repoClient.confirmWebhookExists(prWebhookUrl, ['push', 'pull_request', 'status'], function(err, hook) {
+            repoClient.confirmWebhookExists(prWebhookUrl, ['push', 'pull_request', 'status', 'release'], function(err, hook) {
                 if (err) {
                     log.error('Error during webhook confirmation for ' + repoClient.toString());
                     die(err);
