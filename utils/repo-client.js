@@ -141,8 +141,6 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
         }
         hooks.forEach(function(hook) {
             if (hook.config && url == hook.config.url) {
-                log.warn(hook.events);
-                log.warn(events);
                 // So there is a webhook for this repo, but it might not have the events we want.
                 if (arrayContainsArray(hook.events, events)) {
                     found = true;
