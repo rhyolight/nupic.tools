@@ -167,21 +167,28 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                 return callback(err);
             }
             if (! found) {
-                me.github.repos.createHook({
-                    user: me.org,
-                    repo: me.repo,
-                    name: 'web',
-                    config: {
-                        url: url
-                    },
-                    events: events
-                }, function(err, data) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    log.warn('Created web hook %s for %s, monitoring events "%s"', data.id, data.config.url, data.events.join(', '));
+                // Only create new webhooks if the events array contains events (this is
+                // useful if you want to remove all webhooks, just set githooks: [] in
+                // the config.
+                if (events && events.length) {
+                    me.github.repos.createHook({
+                        user: me.org,
+                        repo: me.repo,
+                        name: 'web',
+                        config: {
+                            url: url
+                        },
+                        events: events
+                    }, function(err, data) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        log.warn('Created web hook %s for %s, monitoring events "%s"', data.id, data.config.url, data.events.join(', '));
+                        callback();
+                    });
+                } else {
                     callback();
-                });
+                }
             } else {
                 callback();
             }

@@ -37,6 +37,14 @@
     numenta/htm.java:
       push: "bin/post_htm.java_push.sh"
 
+  # These are the GitHub events the server will subscribe to when setting up
+  # webhooks. Any exiting webhooks for the current server URL will be deleted.
+  githooks:
+    - push
+    - pull_request
+    - status
+    - release
+
   # Details about each of our mailing lists.
   mailinglists:
     - 
