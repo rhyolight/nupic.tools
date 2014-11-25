@@ -5,8 +5,9 @@ var GitHubApi = require('github'),
     log = require('./logger').logger,
     RepositoryClient;
 
-function arrayContainsArray(left, right) {
-    return _.intersection(left, right).length == right.length;
+function arraysMatch(left, right) {
+    var sameValues = _.intersection(left, right);
+    return sameValues.length == left.length && sameValues.length == right.length;
 }
 
 /**
@@ -141,20 +142,21 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             console.error(err);
             return callback(err);
         }
+        log.info('Found %s webhooks', hooks.length);
         hooks.forEach(function(hook) {
             if (hook.config && url == hook.config.url) {
                 // So there is a webhook for this repo, but it might not have the events we want.
-                if (arrayContainsArray(hook.events, events)) {
+                if (arraysMatch(hook.events, events)) {
                     found = true;
                 } else {
-                    hookRemovers.push(function() {
+                    hookRemovers.push(function(hookRemovalCallback) {
                         // Remove the old webhook
                         log.warn('Removing old webhook for %s.', url);
                         me.github.repos.deleteHook({
                             user: me.org,
                             repo: me.repo,
                             id: hook.id
-                        });
+                        }, hookRemovalCallback);
                     });
                 }
             }
@@ -165,7 +167,6 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                 return callback(err);
             }
             if (! found) {
-                log.warn('Creating web hook for "%s"', events.join(', '));
                 me.github.repos.createHook({
                     user: me.org,
                     repo: me.repo,
@@ -178,7 +179,8 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                     if (err) {
                         return callback(err);
                     }
-                    callback(null, data);
+                    log.warn('Created web hook %s for %s, monitoring events "%s"', data.id, data.config.url, data.events.join(', '));
+                    callback();
                 });
             } else {
                 callback();
