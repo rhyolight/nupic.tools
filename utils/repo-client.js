@@ -1,6 +1,7 @@
 var GitHubApi = require('github'),
     Travis = require('travis-ci'),
     _ = require('underscore'),
+    async = require('async'),
     log = require('./logger').logger,
     RepositoryClient;
 
@@ -134,7 +135,8 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
         user: this.org,
         repo: this.repo
     }, function(err, hooks) {
-        var found = false;
+        var found = false,
+            hookRemovers = [];
         if (err) {
             console.error(err);
             return callback(err);
@@ -145,35 +147,43 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                 if (arrayContainsArray(hook.events, events)) {
                     found = true;
                 } else {
-                    // Remove the old webhook
-                    log.warn('Removing old webhook for %s.', url);
-                    me.github.repos.deleteHook({
-                        user: me.org,
-                        repo: me.repo,
-                        id: hook.id
+                    hookRemovers.push(function() {
+                        // Remove the old webhook
+                        log.warn('Removing old webhook for %s.', url);
+                        me.github.repos.deleteHook({
+                            user: me.org,
+                            repo: me.repo,
+                            id: hook.id
+                        });
                     });
                 }
             }
         });
-        if (! found) {
-            log.warn('Creating web hook for "%s"', events.join(', '));
-            me.github.repos.createHook({
-                user: me.org,
-                repo: me.repo,
-                name: 'web',
-                config: {
-                    url: url
-                },
-                events: events
-            }, function(err, data) {
-                if (err) {
-                    return callback(err);
-                }
-                callback(null, data);
-            });
-        } else {
-            callback();
-        }
+        // First, remove any stale webhooks we found.
+        async.parallel(hookRemovers, function(err) {
+            if (err) {
+                return callback(err);
+            }
+            if (! found) {
+                log.warn('Creating web hook for "%s"', events.join(', '));
+                me.github.repos.createHook({
+                    user: me.org,
+                    repo: me.repo,
+                    name: 'web',
+                    config: {
+                        url: url
+                    },
+                    events: events
+                }, function(err, data) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null, data);
+                });
+            } else {
+                callback();
+            }
+        });
     });
 };
 
