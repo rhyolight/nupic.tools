@@ -129,7 +129,7 @@ RepositoryClient.prototype.rateLimit = function(callback) {
 
 RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback) {
     var me = this;
-    log.verbose('%s/%s web hook check', this.org, this.repo);
+    log.info('%s/%s web hook check', this.org, this.repo);
     this.github.repos.getHooks({
         user: this.org,
         repo: this.repo
@@ -140,13 +140,25 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             return callback(err);
         }
         hooks.forEach(function(hook) {
-            if (hook.config && url == hook.config.url && arrayContainsArray(hook.events, events)) {
-                log.verbose(hook.config.url);
-                found = true;
+            if (hook.config && url == hook.config.url) {
+                log.warn(hook.events);
+                log.warn(events);
+                // So there is a webhook for this repo, but it might not have the events we want.
+                if (arrayContainsArray(hook.events, events)) {
+                    found = true;
+                } else {
+                    // Remove the old webhook
+                    log.warn('Removing old webhook for %s.', url);
+                    me.github.repos.deleteHook({
+                        user: me.org,
+                        repo: me.repo,
+                        id: hook.id
+                    });
+                }
             }
         });
         if (! found) {
-            log.debug('Creating web hook for "%s"', events.join(', '));
+            log.warn('Creating web hook for "%s"', events.join(', '));
             me.github.repos.createHook({
                 user: me.org,
                 repo: me.repo,
