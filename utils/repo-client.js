@@ -151,7 +151,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                 } else {
                     hookRemovers.push(function(hookRemovalCallback) {
                         // Remove the old webhook
-                        log.warn('Removing old webhook for %s.', url);
+                        log.warn('Removing webhook %s for %s.', hook.id, url);
                         me.github.repos.deleteHook({
                             user: me.org,
                             repo: me.repo,

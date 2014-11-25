@@ -165,25 +165,45 @@ function getBuildHooksForMonitor(monitorConfig) {
     return getHooksForMonitorForType('build', monitorConfig);
 }
 
+function getTagHooksForMonitor(monitorConfig) {
+    return getHooksForMonitorForType('tag', monitorConfig);
+}
+
 /**
  * Handles an event from Github that indicates that a PR has been merged into one
  * of the repositories. This could trigger a script to run locally in response,
  * called a "push hook", which are defined in the configuration of each repo as
  * hooks.push = 'path/to/script'.
  * @param payload {object} Full Github payload from the API.
- * @param config {object} Application configuration (used to extract the
- *                        repository monitor configuration and push hook).
+ * @param monitorConfig {object} Repository monitor configuration.
  */
-function handlePushEvent(payload, config) {
+function handlePushEvent(payload, monitorConfig) {
     var repoSlug = payload.repository.organization
             + '/' + payload.repository.name,
-        branch = payload.ref.split('/').pop(),
-        monitorConfig = config.monitors[repoSlug],
-        pushHooks = getPushHooksForMonitor(monitorConfig);
-    log.log('Github push event on ' + repoSlug + '/' + branch);
-    // Only process pushes to master, and only when there is a push hook defined.
-    if (branch == 'master') {
-        _.each(pushHooks, function(hookCmd) {
+        ref = payload.ref.split('/'),
+        refType = ref[1],
+        refName = ref[2],
+        branch, tag,
+        pushHooks = getPushHooksForMonitor(monitorConfig),
+        tagHooks = getTagHooksForMonitor(monitorConfig);
+
+    if (refType == 'heads') {
+        branch = refName;
+    } else if (refType == 'tags') {
+        tag = refName;
+    }
+
+    if (branch) {
+        log.log('Github push event on ' + repoSlug + '/' + branch);
+        // Only process pushes to master, and only when there is a push hook defined.
+        if (branch == 'master') {
+            _.each(pushHooks, function(hookCmd) {
+                executeCommand(hookCmd);
+            });
+        }
+    } else if (tag) {
+        log.log('Github tag event on ' + repoSlug + '/' + tag);
+        _.each(tagHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
     }
@@ -272,8 +292,8 @@ function initializer(clients, config) {
         }
         // Assuming everything else is a push event.
         else if (payload.ref) {
-            log.debug('** Handle Push Event **')
-            handlePushEvent(payload, config);
+            log.debug('** Handle Push Event **');
+            handlePushEvent(payload, repoClient);
             whenDone();
         } else {
             log.error('** Unknown GitHub Webhook Payload! **');
