@@ -92,7 +92,7 @@ function isExternalContext(context) {
 function handleStateChange(sha, state, branches, context, repoClient, cb) {
     var isMaster,
         buildHooks = undefined;
-    log.info('State of ' + sha + ' has changed to "' + state + '".');
+    log.info('State of ' + sha + ' has changed to "' + state + '" for "' + context + '".');
     // A "success" state means that a build passed. If the build passed on the
     // master branch, we need to trigger a "build" hook, which might execute a
     // script to run in the /bin directory.
