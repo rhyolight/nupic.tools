@@ -44,7 +44,7 @@ function RepositoryClient(config) {
 }
 
 RepositoryClient.prototype.merge = function(head, base, callback) {
-    log.log('merging ' + head + ' into ' + base + '...');
+    log.info('merging ' + head + ' into ' + base + '...');
     this.github.repos.merge({
         user: this.org,
         repo: this.repo,
@@ -210,7 +210,7 @@ RepositoryClient.prototype.triggerTravisForPullRequest = function(pull_request_n
         if (! pr) {
             return callback(new Error('No pull request with #' + pull_request_number));
         }
-        log.log("Triggering build restart for PR#" + pull_request_number);
+        log.info("Triggering build restart for PR#" + pull_request_number);
         travis.builds.restart({ id: pr.id }, function(err, restartResp) {
             if (err) return callback(err);
             callback(null, restartResp.result)

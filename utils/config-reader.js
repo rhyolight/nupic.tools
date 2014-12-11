@@ -33,12 +33,6 @@ function createMonitorConfigurations(repos, hooks, contributors) {
         if (typeof(repo.monitor) == 'boolean' && ! repo.monitor) {
             return;
         }
-        // Only enable the Travis Validator for repos with travis enabled.
-        if (! repo.travis) {
-            monitor.validators = {
-                exclude: ["Travis Validator"]
-            };
-        }
         // Put hooks in place if they are defined for this repo.
         if (hooks[repo.slug]) {
             monitor.hooks = hooks[repo.slug];

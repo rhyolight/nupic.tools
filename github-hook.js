@@ -27,13 +27,13 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         base = pullRequest.base,
         sha = head.sha;
 
-    log.log('Received pull request "' + action + '" from ' + githubUser);
+    log.info('Received pull request "' + action + '" from ' + githubUser);
 
     if (action == 'closed') {
         // If this pull request just got merged, we need to re-trigger the
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
-            log.log('A PR just merged. Re-validating open pull requests...');
+            log.info('A PR just merged. Re-validating open pull requests...');
             contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) {
@@ -69,6 +69,12 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
     }
 }
 
+function isExternalContext(context) {
+    return ! _.contains(_.map(dynamicValidatorModules, function(validator) {
+        return validator.name;
+    }), context);
+}
+
 /**
  * Given a request payload from Github, and the RepositoryClient object associated
  * with this repo, this function retrieves all the known statuses for the repo,
@@ -77,14 +83,16 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
  * @param sha {string} SHA of the tip of the PR.
  * @param state {string} State of the PR (opened, closed, merged, etc)
  * @param branches {Object[]} List of branches that came with the state change
+ * @param context {string} State change context, used to figure out if this
+ *                         was caused by a validator owned by this server.
  * @param repoClient {RepositoryClient} Repo client associated with this repo this
  *                                      PR was created against.
  * @param cb {function} Will be called when PR has been handled.
  */
-function handleStateChange(sha, state, branches, repoClient, cb) {
+function handleStateChange(sha, state, branches, context, repoClient, cb) {
     var isMaster,
         buildHooks = undefined;
-    log.log('State of ' + sha + ' has changed to "' + state + '".');
+    log.info('State of ' + sha + ' has changed to "' + state + '" for "' + context + '".');
     // A "success" state means that a build passed. If the build passed on the
     // master branch, we need to trigger a "build" hook, which might execute a
     // script to run in the /bin directory.
@@ -95,42 +103,27 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
     // build success hook.
     if (state == 'success' && isMaster) {
         buildHooks = getBuildHooksForMonitor(repoClient);
-        log.log('Github build success event on ' + repoClient + '/');
+        log.info('Github build success event on ' + repoClient + '/');
         // Only process when there is a build hook defined.
 
         _.each(buildHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
     }
-    // Otherwise we process this as any other state change.
-    else {
+    // Only process state changes caused by external services (not this server).
+    else if (isExternalContext(context)) {
         repoClient.getCommit(sha, function(err, commit) {
-            utils.lastStatusWasExternal(repoClient, sha, function(external) {
-                var commitAuthor = undefined;
-                // This is a temporary block until I figure out what is going on here.
-                if (! commit.author) {
-                    if (cb) { cb(new Error('PR has no author!')); }
-                    return;
-                }
-                commitAuthor = commit.author.login;
-                if (external) {
-
-                    shaValidator.performCompleteValidation(
-                        sha,
-                        commitAuthor,
-                        repoClient,
-                        dynamicValidatorModules,
-                        true,
-                        cb
-                    );
-
-                } else {
-                    // ignore statuses that were created by this server
-                    log.warn('Ignoring "' + state + '" status created by nupic.tools.');
-                    if (cb) { cb(); }
-                }
-            });
+            shaValidator.performCompleteValidation(
+                sha,
+                commit.author.login,
+                repoClient,
+                dynamicValidatorModules,
+                true,
+                cb
+            );
         });
+    } else {
+        log.debug('Ignoring state change.');
     }
 }
 
@@ -194,7 +187,7 @@ function handlePushEvent(payload, monitorConfig) {
     }
 
     if (branch) {
-        log.log('Github push event on ' + repoSlug + '/' + branch);
+        log.info('Github push event on ' + repoSlug + '/' + branch);
         // Only process pushes to master, and only when there is a push hook defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookCmd) {
@@ -202,7 +195,7 @@ function handlePushEvent(payload, monitorConfig) {
             });
         }
     } else if (tag) {
-        log.log('Github tag event on ' + repoSlug + '/' + tag);
+        log.info('Github tag event on ' + repoSlug + '/' + tag);
         _.each(tagHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
@@ -217,13 +210,9 @@ function handlePushEvent(payload, monitorConfig) {
  *                                     being monitored.
  * @param config {object} Application configuration.
  */
-function initializer(clients, config) {
-    var validatorExclusions = [];
+function initializer(clients) {
     repoClients = clients;
-    if (config.validators && config.validators.exclude) {
-        validatorExclusions = config.validators.exclude;
-    }
-    dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR, validatorExclusions);
+    dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR);
     /**
      * This is the actual request handler, which is returned after the initializer
      * is called. Handles every hook call from Github.
@@ -231,7 +220,7 @@ function initializer(clients, config) {
     return function(req, res) {
         // Get what repository Github is telling us about
         var payload = JSON.parse(req.body.payload),
-            sha, repoName, repoClient, repoSlug, branch, pushHook;
+            sha, repoName, repoClient;
 
         if (payload.name) {
             repoName = payload.name;
@@ -260,7 +249,7 @@ function initializer(clients, config) {
         function whenDone(err) {
             if (err) {
                 log.error(err);
-                log.log(payload);
+                log.info(payload);
             }
             res.end();
         }
@@ -275,7 +264,7 @@ function initializer(clients, config) {
                 whenDone();
             } else {
                 handleStateChange(
-                    sha, payload.state, payload.branches, repoClient, whenDone
+                    sha, payload.state, payload.branches, payload.context, repoClient, whenDone
                 );
             }
         }

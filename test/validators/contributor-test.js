@@ -396,7 +396,7 @@ describe('contributor validator', function() {
         assert.equal(contributor.name, 'Contributor Validator', 'Wrong commit validator name');
     });
     it('returns success state when user exists', function(done) {
-        contributor.validate('sha', 'rhyolight', null, githubClientStub, function(err, status) {
+        contributor.validate('sha', 'rhyolight', githubClientStub, function(err, status) {
             assert.ifError(err, 'error thrown during validation');
             assert(status.state, 'no status state returned');
             assert.equal(status.state, 'success', 'wrong status state');
@@ -404,22 +404,13 @@ describe('contributor validator', function() {
         });
     });
     it('returns failure status when user does not exist', function(done) {
-        contributor.validate('sha', 'urgurthemaster', null, githubClientStub, function(err, status) {
+        contributor.validate('sha', 'urgurthemaster', githubClientStub, function(err, status) {
             assert.ifError(err, 'error thrown during validation');
             assert(status.state, 'no status state returned');
             assert.equal(status.state, 'failure', 'wrong status state');
-            assert.equal(status.description, 'urgurthemaster has not signed the Numenta Contributor License');
+            assert.equal(status.description, 'urgurthemaster must sign the Numenta Contributor License');
             assert.equal(status.target_url, 'http://numenta.org/licenses/cl/')
             done();
         });
     });
-    it('returns success state is same as github client user', function(done) {
-        contributor.validate('sha', 'foo', null, githubClientStub, function(err, status) {
-            assert.ifError(err, 'error thrown during validation');
-            assert(status.state, 'no status state returned');
-            assert.equal(status.state, 'success', 'wrong status state');
-            done();
-        });
-    });
-    
 });
