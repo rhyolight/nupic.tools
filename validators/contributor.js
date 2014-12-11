@@ -11,7 +11,7 @@ function isContributor(name, roster) {
                  }, false);
 }
 
-function validator(sha, githubUser, _, githubClient, callback) {
+function validator(sha, githubUser, githubClient, callback) {
     log.log('Validating contributor "' + githubUser + '"...');
     if (githubUser == githubClient.user) {
         // The Github user assigned as the API client would always pass validation.

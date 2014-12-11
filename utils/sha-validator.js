@@ -78,81 +78,74 @@ function performCompleteValidation(sha, githubUser, repoClient, validators, post
 
     log.debug('VALIDATING ' + sha);
 
-    repoClient.getAllStatusesFor(sha, function(err, statusHistory) {
-        if (err) {
-            return cb(new Error('Error communicating with Github API.'));
-        }
+    // clone of the global validators array
+    var commitValidators = validators.slice(0),
+        validationFailed = false,
+        target_url,
+        highestPriority = -1,
+        validatorsRun = [],
+        validatorsSkipped = [],
+        skippedMSG;
 
-        // clone of the global validators array
-        var commitValidators = validators.slice(0),
-            validationFailed = false,
-            target_url,
-            highestPriority = -1,
-            validatorsRun = [],
-            validatorsSkipped = [],
-            skippedMSG;
-
-        function runNextValidation() {
-            var validator,
-                priority;
-            if (validationFailed) return;
-            validator = commitValidators.shift();
-            if (validator) {
-                log.log(sha + ': Running commit validator: ' + validator.name);
-                validatorsRun.push(validator);
-                validator.validate(sha, githubUser, statusHistory, repoClient, function(err, result) {
-                    if (err) {
-                        console.error('Error running commit validator "' + validator.name + '"');
-                        console.error(err);
-                        return callback(null, sha, {
-                            state: 'error',
-                            description: 'Error running commit validator "' + validator.name + '": ' + err.message
-                        }, repoClient);
-                    }
-                    log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
-                    if (result.state !== 'success') {
-                        // Upon failure, we set a flag that will skip the
-                        // remaining validators and post a failure status.
-                        validationFailed = true;
-                        callback(null, sha, result, repoClient);
-                    }
-                    // This code is just allowing the different validators to
-                    // fight over which one will provide the "Details" URL
-                    // that gets displayed on the Github PR.
-                    if (validator.hasOwnProperty('priority')) {
-                        priority = validator.priority;
-                    } else {
-                        priority = 0;
-                    }
-                    if (priority >= highestPriority) {
-                        highestPriority = priority;
-                        if (result.hasOwnProperty('target_url')) {
-                            target_url = result.target_url;
-                        }
-                    };
-                    log.log(sha + ': ' + validator.name + ' complete.');
-                    runNextValidation();
-                });
-            } else {
-                log.log(sha + ': Validation complete.');
-                // No more validators left in the array, so we can complete the
-                // validation successfully.
-                if (validatorsSkipped.length > 0) {
-                    skippedMSG = ' [' + validatorsSkipped.length + ' skipped])';
-                } else {
-                    skippedMSG = ')';
+    function runNextValidation() {
+        var validator,
+            priority;
+        if (validationFailed) return;
+        validator = commitValidators.shift();
+        if (validator) {
+            log.log(sha + ': Running commit validator: ' + validator.name);
+            validatorsRun.push(validator);
+            validator.validate(sha, githubUser, repoClient, function(err, result) {
+                if (err) {
+                    console.error('Error running commit validator "' + validator.name + '"');
+                    console.error(err);
+                    return callback(null, sha, {
+                        state: 'error',
+                        description: 'Error running commit validator "' + validator.name + '": ' + err.message
+                    }, repoClient);
                 }
-                callback(null, sha, {
-                    state: 'success',
-                    description: 'All validations passed (' + validatorsRun.map(function(v) { return v.name; }).join(', ') + skippedMSG,
-                    target_url: target_url
-                }, repoClient);
+                log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
+                if (result.state !== 'success') {
+                    // Upon failure, we set a flag that will skip the
+                    // remaining validators and post a failure status.
+                    validationFailed = true;
+                    callback(null, sha, result, repoClient);
+                }
+                // This code is just allowing the different validators to
+                // fight over which one will provide the "Details" URL
+                // that gets displayed on the Github PR.
+                if (validator.hasOwnProperty('priority')) {
+                    priority = validator.priority;
+                } else {
+                    priority = 0;
+                }
+                if (priority >= highestPriority) {
+                    highestPriority = priority;
+                    if (result.hasOwnProperty('target_url')) {
+                        target_url = result.target_url;
+                    }
+                };
+                log.log(sha + ': ' + validator.name + ' complete.');
+                runNextValidation();
+            });
+        } else {
+            log.log(sha + ': Validation complete.');
+            // No more validators left in the array, so we can complete the
+            // validation successfully.
+            if (validatorsSkipped.length > 0) {
+                skippedMSG = ' [' + validatorsSkipped.length + ' skipped])';
+            } else {
+                skippedMSG = ')';
             }
+            callback(null, sha, {
+                state: 'success',
+                description: 'All validations passed (' + validatorsRun.map(function(v) { return v.name; }).join(', ') + skippedMSG,
+                target_url: target_url
+            }, repoClient);
         }
+    }
 
-        runNextValidation();
-
-    });
+    runNextValidation();
 }
 
 module.exports = {
