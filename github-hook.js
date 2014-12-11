@@ -27,13 +27,13 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         base = pullRequest.base,
         sha = head.sha;
 
-    log.log('Received pull request "' + action + '" from ' + githubUser);
+    log.info('Received pull request "' + action + '" from ' + githubUser);
 
     if (action == 'closed') {
         // If this pull request just got merged, we need to re-trigger the
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
-            log.log('A PR just merged. Re-validating open pull requests...');
+            log.info('A PR just merged. Re-validating open pull requests...');
             contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) {
@@ -92,7 +92,7 @@ function isExternalContext(context) {
 function handleStateChange(sha, state, branches, context, repoClient, cb) {
     var isMaster,
         buildHooks = undefined;
-    log.log('State of ' + sha + ' has changed to "' + state + '".');
+    log.info('State of ' + sha + ' has changed to "' + state + '".');
     // A "success" state means that a build passed. If the build passed on the
     // master branch, we need to trigger a "build" hook, which might execute a
     // script to run in the /bin directory.
@@ -103,7 +103,7 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
     // build success hook.
     if (state == 'success' && isMaster) {
         buildHooks = getBuildHooksForMonitor(repoClient);
-        log.log('Github build success event on ' + repoClient + '/');
+        log.info('Github build success event on ' + repoClient + '/');
         // Only process when there is a build hook defined.
 
         _.each(buildHooks, function(hookCmd) {
@@ -122,6 +122,8 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
                 cb
             );
         });
+    } else {
+        log.debug('Ignoring state change.');
     }
 }
 
@@ -185,7 +187,7 @@ function handlePushEvent(payload, monitorConfig) {
     }
 
     if (branch) {
-        log.log('Github push event on ' + repoSlug + '/' + branch);
+        log.info('Github push event on ' + repoSlug + '/' + branch);
         // Only process pushes to master, and only when there is a push hook defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookCmd) {
@@ -193,7 +195,7 @@ function handlePushEvent(payload, monitorConfig) {
             });
         }
     } else if (tag) {
-        log.log('Github tag event on ' + repoSlug + '/' + tag);
+        log.info('Github tag event on ' + repoSlug + '/' + tag);
         _.each(tagHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
@@ -247,7 +249,7 @@ function initializer(clients) {
         function whenDone(err) {
             if (err) {
                 log.error(err);
-                log.log(payload);
+                log.info(payload);
             }
             res.end();
         }

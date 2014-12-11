@@ -13,7 +13,7 @@ function isContributor(name, roster) {
 }
 
 function validator(sha, githubUser, githubClient, callback) {
-    log.log('Validating contributor "' + githubUser + '"...');
+    log.info('Validating contributor "' + githubUser + '"...');
     contribUtil.getAll(githubClient.contributorsUrl, function(err, contributors) {
         var response = {};
         // If there's an error, we'll handle it like a validation failure.

@@ -65,7 +65,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
             monitorConfig.validators = {};
         }
         repoClient = new RepositoryClient(monitorConfig);
-        log.log('RepositoryClient created for '
+        log.info('RepositoryClient created for '
             + monitorConfig.username.magenta + ' on '
             + repoClient.toString().magenta);
 
@@ -95,7 +95,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
                             + '\tfor "' + hook.events.join(', ') + '"\n'
                             + '\ton ' + hook.config.url);
                     } else {
-                        log.log('Webhook exists for ' + repoClient.toString());
+                        log.info('Webhook exists for ' + repoClient.toString());
                     }
                     count++;
                 }
