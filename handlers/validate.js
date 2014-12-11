@@ -2,6 +2,7 @@ var fs = require('fs'),
     path = require('path'),
     url = require('url'),
     qs = require('querystring'),
+    _ = require('underscore'),
     shaValidator = require('../utils/sha-validator'),
     contributors = require('../utils/contributors'),
     jsonUtils = require('../utils/json'),
@@ -38,8 +39,6 @@ function findClientFor(sha, callback) {
     next();
 }
 
-
-
 function validateSha(req, res) {
 
     var reqUrl = url.parse(req.url),
@@ -71,20 +70,25 @@ function validateSha(req, res) {
             return jsonUtils.renderErrors(errors, res, jsonPCallback);
         }
         committer = payload.author ? payload.author.login : false;
-        shaValidator.performCompleteValidation(sha, committer, client, validators, postStatus, function (err, sha, statusDetails, repoClient) {
-            var htmlOut = '<html><body>\n<h1>SHA Validation report</h1>\n';
-            htmlOut += '<h2>' + repoClient.toString() + '</h2>\n';
-            htmlOut += '<h2>' + sha + '</h2>\n';
-            htmlOut += '<h3>' + statusDetails.state + '</h3>\n';
-            htmlOut += '<p>' + statusDetails.description + '</p>\n';
-            if (statusDetails.target_url) {
-                htmlOut += '<p><a href="' + statusDetails.target_url + '">Details</a></p>\n';
+        shaValidator.performCompleteValidation(sha, committer, client,
+                                               validators, postStatus,
+            function (err, sha, validationResponses, repoClient) {
+                var htmlOut = '<html><body>\n<h1>SHA Validation report</h1>\n';
+                htmlOut += '<h2>' + repoClient.toString() + '</h2>\n';
+                htmlOut += '<h2>' + sha + '</h2>\n';
+                _.each(validationResponses, function (statusDetails, validatorName) {
+                    htmlOut += '<h3>' + validatorName + ': ' + statusDetails.state + '</h3>\n';
+                    htmlOut += '<p>' + statusDetails.description + '</p>\n';
+                    if (statusDetails.target_url) {
+                        htmlOut += '<p><a href="' + statusDetails.target_url + '">Details</a></p>\n';
+                    }
+                });
+                htmlOut += '\n</body></html>';
+                res.setHeader('Content-Type', 'text/html');
+                res.setHeader('Content-Length', htmlOut.length);
+                res.end(htmlOut);
             }
-            htmlOut += '\n</body></html>';
-            res.setHeader('Content-Type', 'text/html');
-            res.setHeader('Content-Length', htmlOut.length);
-            res.end(htmlOut);
-        });
+        );
     });
 
 }

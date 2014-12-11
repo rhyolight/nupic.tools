@@ -408,18 +408,9 @@ describe('contributor validator', function() {
             assert.ifError(err, 'error thrown during validation');
             assert(status.state, 'no status state returned');
             assert.equal(status.state, 'failure', 'wrong status state');
-            assert.equal(status.description, 'urgurthemaster has not signed the Numenta Contributor License');
+            assert.equal(status.description, 'urgurthemaster must sign the Numenta Contributor License');
             assert.equal(status.target_url, 'http://numenta.org/licenses/cl/')
             done();
         });
     });
-    it('returns success state is same as github client user', function(done) {
-        contributor.validate('sha', 'foo', githubClientStub, function(err, status) {
-            assert.ifError(err, 'error thrown during validation');
-            assert(status.state, 'no status state returned');
-            assert.equal(status.state, 'success', 'wrong status state');
-            done();
-        });
-    });
-    
 });

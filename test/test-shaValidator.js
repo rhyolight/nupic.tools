@@ -1,4 +1,5 @@
-var assert = require('assert'),
+var assert = require('chai').assert,
+    expect = require('chai').expect,
     shaValidator = require('./../utils/sha-validator.js'),
     repoClientStub = {
         'validators': {
@@ -14,7 +15,8 @@ var assert = require('assert'),
                 assert.equal(githubUser, 'carlfriess', 'in FirstValidator.validate :  wrong githubUser!');
                 callback(null, {
                     'state': 'success',
-                    'target_url': 'correctTargetURL'
+                    'description': 'firstDescription',
+                    'target_url': 'firstTargetUrl'
                 });
              }
         },
@@ -26,42 +28,52 @@ var assert = require('assert'),
                 assert.equal(githubUser, 'carlfriess', 'in SecondValidator.validate :  wrong githubUser!');
                 callback(null, {
                     'state': 'success',
-                    'target_url': 'otherTargetURL'
+                    'description': 'secondDescription',
+                    'target_url': 'secondTargetUrl'
                 });
              }
         }
     ];
 
 describe('shaValidator test', function() {
-    it('Testing with two validators.', function(done) {
+    it('performs multiple validations', function(done) {
         shaValidator.performCompleteValidation('testSHA', 'carlfriess', repoClientStub, validatorsStub, false, function(err, sha, output, repoClient) {
-            assert(!err, 'Should not be an error');
-            assert.equal(sha, 'testSHA', 'in shaValidator.performCompleteValidation :  wrong sha in output!');
-            assert.equal(output.state, 'success', 'in shaValidator.performCompleteValidation :  wrong state in output :  Not success!');
-            assert.equal(output.description, 'All validations passed (FirstValidator, SecondValidator)', 'in shaValidator.performCompleteValidation :  wrong description in output!');
+            expect(err).to.not.exist;
+            expect(sha).to.equal('testSHA');
+            expect(output).to.be.instanceOf(Object);
+            expect(output).to.have.keys('FirstValidator', 'SecondValidator');
+            expect(output['FirstValidator']).to.have.keys(['state', 'description', 'target_url']);
+            expect(output['SecondValidator']).to.have.keys(['state', 'description', 'target_url']);
+            expect(output['FirstValidator'].state).to.equal('success');
+            expect(output['SecondValidator'].state).to.equal('success');
+            expect(output['FirstValidator'].description).to.equal('firstDescription');
+            expect(output['SecondValidator'].description).to.equal('secondDescription');
+            expect(output['FirstValidator'].target_url).to.equal('firstTargetUrl');
+            expect(output['SecondValidator'].target_url).to.equal('secondTargetUrl');
             done();
         });
     });
 
-    it('Testing postNewNupicStatus', function(done) {
+    it('posts to github status API', function(done) {
         var mockSha = 'mockSha',
-        mockStatusDetails = {
-            'state': 'success',
-            'target_url': 'otherTargetURL',
-            'description': 'description'
-        },
-        statusPosted = null,
-        mockClient = {
-            github: {
-                statuses: {
-                    create: function (statusObj) {
-                        statusPosted = statusObj;
+            mockContext = 'test-context',
+            mockStatusDetails = {
+                'state': 'success',
+                'target_url': 'secondTargetUrl',
+                'description': 'description'
+            },
+            statusPosted = null,
+            mockClient = {
+                github: {
+                    statuses: {
+                        create: function (statusObj) {
+                            statusPosted = statusObj;
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        shaValidator.postNewNupicStatus(mockSha, mockStatusDetails, mockClient);
+        shaValidator.postNewNupicStatus(mockContext, mockSha, mockStatusDetails, mockClient);
 
         assert(statusPosted, 'status should be posted');
         assert.equal(statusPosted.state, mockStatusDetails.state, 'posted wrong state!');

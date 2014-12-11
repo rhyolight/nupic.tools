@@ -1,4 +1,6 @@
-var utils = require('./general'),
+var _ = require('underscore'),
+    async = require('async'),
+    utils = require('./general'),
     log = require('./logger').logger;
 
 function coloredStatus(status) {
@@ -11,7 +13,7 @@ function coloredStatus(status) {
     }
 }
 
-function postNewNupicStatus(sha, statusDetails, repoClient) {
+function postNewNupicStatus(statusContext, sha, statusDetails, repoClient) {
     log.info(sha + ': Posting new NuPIC Status ('
         + coloredStatus(statusDetails.state) + ') to github');
     // If the old status was created by nupic.tools, it will start with
@@ -19,16 +21,17 @@ function postNewNupicStatus(sha, statusDetails, repoClient) {
     // little prefix to the description string.
     var statusDescription = utils.normalizeStatusDescription(
         statusDetails.description
-    );
-    log.info(statusDescription);
-    repoClient.github.statuses.create({
+    ), payload = {
         user: repoClient.org,
         repo: repoClient.repo,
         sha: sha,
         state: statusDetails.state,
+        context: statusContext,
         description: statusDescription,
         target_url: statusDetails.target_url
-    });
+    };
+    log.debug(payload);
+    repoClient.github.statuses.create(payload);
 }
 
 function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
@@ -56,100 +59,34 @@ function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
 }
 
 function performCompleteValidation(sha, githubUser, repoClient, validators, postStatus, cb) {
-    var callback = cb;
+    var callback = cb, validationFunctions = {};
     // default dummy callback for simpler code later
     if (! cb) {
         callback = function() {};
     }
-    // if we should post the status to github, we'll wrap the callback with our
-    // status posting logic
-    if (postStatus) {
-        callback = function() {
-            var args = Array.prototype.slice.call(arguments),
-                err = args.shift();
-            if (! err) {
-                postNewNupicStatus.apply(this, args);
-            }
-            if (cb) {
-                cb.apply(this, arguments);
-            }
-        };
-    }
 
-    log.debug('VALIDATING ' + sha);
+    log.debug('VALIDATING ' + repoClient.toString() + ' at ' + sha);
 
-    // clone of the global validators array
-    var commitValidators = validators.slice(0),
-        validationFailed = false,
-        target_url,
-        highestPriority = -1,
-        validatorsRun = [],
-        validatorsSkipped = [],
-        skippedMSG;
-
-    function runNextValidation() {
-        var validator,
-            priority;
-        if (validationFailed) return;
-        validator = commitValidators.shift();
-        if (validator) {
-            log.log(sha + ': Running commit validator: ' + validator.name);
-            validatorsRun.push(validator);
-            validator.validate(sha, githubUser, repoClient, function(err, result) {
-                if (err) {
-                    console.error('Error running commit validator "' + validator.name + '"');
-                    console.error(err);
-                    return callback(null, sha, {
-                        state: 'error',
-                        description: 'Error running commit validator "' + validator.name + '": ' + err.message
-                    }, repoClient);
+    _.each(validators, function(validator) {
+        validationFunctions[validator.name] = function(asyncCallback) {
+            log.debug(sha + ': Running commit validator: ' + validator.name);
+            validator.validate(sha, githubUser, repoClient, function(err, validationResult) {
+                if (postStatus) {
+                    postNewNupicStatus(validator.name, sha, validationResult, repoClient);
                 }
-                log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
-                if (result.state !== 'success') {
-                    // Upon failure, we set a flag that will skip the
-                    // remaining validators and post a failure status.
-                    validationFailed = true;
-                    callback(null, sha, result, repoClient);
-                }
-                // This code is just allowing the different validators to
-                // fight over which one will provide the "Details" URL
-                // that gets displayed on the Github PR.
-                if (validator.hasOwnProperty('priority')) {
-                    priority = validator.priority;
-                } else {
-                    priority = 0;
-                }
-                if (priority >= highestPriority) {
-                    highestPriority = priority;
-                    if (result.hasOwnProperty('target_url')) {
-                        target_url = result.target_url;
-                    }
-                };
-                log.log(sha + ': ' + validator.name + ' complete.');
-                runNextValidation();
+                asyncCallback(err, validationResult);
             });
-        } else {
-            log.log(sha + ': Validation complete.');
-            // No more validators left in the array, so we can complete the
-            // validation successfully.
-            if (validatorsSkipped.length > 0) {
-                skippedMSG = ' [' + validatorsSkipped.length + ' skipped])';
-            } else {
-                skippedMSG = ')';
-            }
-            callback(null, sha, {
-                state: 'success',
-                description: 'All validations passed (' + validatorsRun.map(function(v) { return v.name; }).join(', ') + skippedMSG,
-                target_url: target_url
-            }, repoClient);
-        }
-    }
+        };
+    });
 
-    runNextValidation();
+    async.parallel(validationFunctions, function(err, results) {
+        callback(null, sha, results, repoClient);
+    });
+
 }
 
 module.exports = {
     performCompleteValidation: performCompleteValidation,
     triggerTravisBuildsOnAllOpenPullRequests: triggerTravisBuildsOnAllOpenPullRequests,
-    postNewNupicStatus: postNewNupicStatus
+    postNewNupicStatus: postNewNupicStatus // for testing
 };
