@@ -105,31 +105,14 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
     // Otherwise we process this as any other state change.
     else {
         repoClient.getCommit(sha, function(err, commit) {
-            utils.lastStatusWasExternal(repoClient, sha, function(external) {
-                var commitAuthor = undefined;
-                // This is a temporary block until I figure out what is going on here.
-                if (! commit.author) {
-                    if (cb) { cb(new Error('PR has no author!')); }
-                    return;
-                }
-                commitAuthor = commit.author.login;
-                if (external) {
-
-                    shaValidator.performCompleteValidation(
-                        sha,
-                        commitAuthor,
-                        repoClient,
-                        dynamicValidatorModules,
-                        true,
-                        cb
-                    );
-
-                } else {
-                    // ignore statuses that were created by this server
-                    log.warn('Ignoring "' + state + '" status created by nupic.tools.');
-                    if (cb) { cb(); }
-                }
-            });
+            shaValidator.performCompleteValidation(
+                sha,
+                commit.author.login,
+                repoClient,
+                dynamicValidatorModules,
+                true,
+                cb
+            );
         });
     }
 }

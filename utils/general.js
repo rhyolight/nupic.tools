@@ -145,21 +145,6 @@ function lastStatusWasExternal(repoClient, sha, callback) {
     });
 }
 
-/**
- * Some old statuses have old redundant prefixes due to previous processing errors
- * that list "Nupic Status: " multiple times before the actual status message.
- * This will clean those up so there is only one.
- */
-function normalizeStatusDescription(description) {
-    var output = description;
-    // First, we'll remove any existing NuPIC Status prefixes
-    while (output.indexOf(NUPIC_STATUS_PREFIX) == 0) {
-        output = output.substr(NUPIC_STATUS_PREFIX.length + 1);
-    }
-    // Finally, add the one true prefix.
-    return NUPIC_STATUS_PREFIX + ' ' + output;
-}
-
 /* Removes the passwords from the config for logging. */
 function sterilizeConfig(config) {
     var out = JSON.parse(JSON.stringify(config));
@@ -176,7 +161,6 @@ module.exports = {
     constructRepoClients: constructRepoClients,
     sterilizeConfig: sterilizeConfig,
     sortStatuses: sortStatuses,
-    normalizeStatusDescription: normalizeStatusDescription,
     lastStatusWasExternal: lastStatusWasExternal,
     __module: module // for unit testing and mocking require()
 };

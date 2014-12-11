@@ -78,7 +78,7 @@ describe('shaValidator test', function() {
         assert(statusPosted, 'status should be posted');
         assert.equal(statusPosted.state, mockStatusDetails.state, 'posted wrong state!');
         assert.equal(statusPosted.target_url, mockStatusDetails.target_url, 'posted wrong target_url!');
-        assert.equal(statusPosted.description, 'NuPIC Status: ' + mockStatusDetails.description, 'posted wrong state!');
+        assert.equal(statusPosted.description, mockStatusDetails.description, 'posted wrong state!');
 
         done();
     });

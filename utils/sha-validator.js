@@ -16,18 +16,13 @@ function coloredStatus(status) {
 function postNewNupicStatus(statusContext, sha, statusDetails, repoClient) {
     log.info(sha + ': Posting new NuPIC Status ('
         + coloredStatus(statusDetails.state) + ') to github');
-    // If the old status was created by nupic.tools, it will start with
-    // "NuPIC Status:". But if it was created by Travis-CI, we want to add that
-    // little prefix to the description string.
-    var statusDescription = utils.normalizeStatusDescription(
-        statusDetails.description
-    ), payload = {
+    var payload = {
         user: repoClient.org,
         repo: repoClient.repo,
         sha: sha,
         state: statusDetails.state,
         context: statusContext,
-        description: statusDescription,
+        description: statusDetails.description,
         target_url: statusDetails.target_url
     };
     log.debug(payload);
