@@ -11,30 +11,18 @@ function die(err) {
     process.exit(-1);
 }
 
-var arrayUnique = function(a) {
-    return a.reduce(function(p, c) {
-        if (p.indexOf(c) < 0) p.push(c);
-        return p;
-    }, []);
-};
-
 /**
  * Reads all the JavaScript files within a directory, assuming they are all
  * proper node.js modules, and loads them.
  * @return {Array} Modules loaded.
  */
-function initializeModulesWithin(dir, exclusions) {
+function initializeModulesWithin(dir) {
     var output = [];
     var fullDir = path.join(__dirname, '..', dir);
     fs.readdirSync(fullDir).forEach(function(fileName) {
-        var moduleName = fileName.split('.').shift(),
-            excluded = false;
-        if (exclusions != undefined && exclusions.indexOf(moduleName) > -1) {
-            excluded = true;
-        }
-        if(! excluded &&
-                fileName.charAt(0) != "."
-                && fileName.substr(fileName.length - 3) == ".js")   {
+        var moduleName = fileName.split('.').shift();
+        if(fileName.charAt(0) != "."
+                && fileName.substr(fileName.length - 3) == ".js") {
             output.push(require('../' + dir + '/' + moduleName));
         }
     });
@@ -76,14 +64,6 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         if (! monitorConfig.validators) {
             monitorConfig.validators = {};
         }
-        if (! monitorConfig.validators.exclude) {
-            monitorConfig.validators.exclude = [];
-        }
-        if (globalValidatorConfig && globalValidatorConfig.exclude) {
-            monitorConfig.validators.exclude
-                = arrayUnique(monitorConfig.validators.exclude.concat(globalValidatorConfig.exclude));
-        }
-
         repoClient = new RepositoryClient(monitorConfig);
         log.log('RepositoryClient created for '
             + monitorConfig.username.magenta + ' on '

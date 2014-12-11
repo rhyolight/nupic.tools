@@ -45,13 +45,6 @@ describe('general utilities', function() {
             assert.equal(initialized[3], 'd-mod', 'wrong modules returned');
             assert.equal(initialized[4], 'e-mod', 'wrong modules returned');
         });
-        it('ignores excluded modules', function() {
-            var initialized = general.initializeModulesWithin('mockDir', ['e','b']);
-            assert.equal(initialized.length, 3, 'excluded modules were not excluded');
-            assert.equal(initialized[0], 'a-mod', 'wrong modules returned');
-            assert.equal(initialized[1], 'c-mod', 'wrong modules returned');
-            assert.equal(initialized[2], 'd-mod', 'wrong modules returned');
-        });
     });
 
     it('prevents passwords from showing up in sterilized configs', function() {
@@ -125,26 +118,5 @@ describe('general utilities', function() {
             });
         });
         
-        it('includes both global and local validator exclusions', function(done) {
-
-            general.constructRepoClients('pr-webhook-url', mockConfig, function(clients) {
-                var clientConfig = repoClientConfigs['has-no-validator'];
-                assert.equal(clientConfig.validators.exclude.length, 1, 
-                    'global and local validator exclusions were not merged properly: ' +
-                    'validator with only one global exclusion should have 1 in config');
-                assert.equal(clientConfig.validators.exclude[0], "global-exclude", 
-                    'global and local validator exclusions were not merged properly: ' +
-                    'bad value for validator exclusion');
-                
-                clientConfig = repoClientConfigs['has-validator'];
-                assert.equal(clientConfig.validators.exclude.length, 2, 
-                    'global and local validator exclusions were not merged properly: ' +
-                    'validator with both global and local exclusion should have both included in config');
-                done();
-            });
-        });
-
-
-
     });
 });

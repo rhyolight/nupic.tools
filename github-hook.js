@@ -217,13 +217,9 @@ function handlePushEvent(payload, monitorConfig) {
  *                                     being monitored.
  * @param config {object} Application configuration.
  */
-function initializer(clients, config) {
-    var validatorExclusions = [];
+function initializer(clients) {
     repoClients = clients;
-    if (config.validators && config.validators.exclude) {
-        validatorExclusions = config.validators.exclude;
-    }
-    dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR, validatorExclusions);
+    dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR);
     /**
      * This is the actual request handler, which is returned after the initializer
      * is called. Handles every hook call from Github.
@@ -231,7 +227,7 @@ function initializer(clients, config) {
     return function(req, res) {
         // Get what repository Github is telling us about
         var payload = JSON.parse(req.body.payload),
-            sha, repoName, repoClient, repoSlug, branch, pushHook;
+            sha, repoName, repoClient;
 
         if (payload.name) {
             repoName = payload.name;

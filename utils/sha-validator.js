@@ -92,59 +92,47 @@ function performCompleteValidation(sha, githubUser, repoClient, validators, post
             validatorsSkipped = [],
             skippedMSG;
 
-        function shouldSkipValidation(repoClient, validator) {
-            return repoClient.validators
-                && repoClient.validators.exclude
-                && repoClient.validators.exclude.indexOf(validator.name) !== -1
-        }
-
         function runNextValidation() {
             var validator,
                 priority;
             if (validationFailed) return;
             validator = commitValidators.shift();
             if (validator) {
-                if (shouldSkipValidation(repoClient, validator))   {
-                    validatorsSkipped.push(validator);
-                    log.debug(sha + ': Skipped validator "' + validator.name + '"');
+                log.log(sha + ': Running commit validator: ' + validator.name);
+                validatorsRun.push(validator);
+                validator.validate(sha, githubUser, statusHistory, repoClient, function(err, result) {
+                    if (err) {
+                        console.error('Error running commit validator "' + validator.name + '"');
+                        console.error(err);
+                        return callback(null, sha, {
+                            state: 'error',
+                            description: 'Error running commit validator "' + validator.name + '": ' + err.message
+                        }, repoClient);
+                    }
+                    log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
+                    if (result.state !== 'success') {
+                        // Upon failure, we set a flag that will skip the
+                        // remaining validators and post a failure status.
+                        validationFailed = true;
+                        callback(null, sha, result, repoClient);
+                    }
+                    // This code is just allowing the different validators to
+                    // fight over which one will provide the "Details" URL
+                    // that gets displayed on the Github PR.
+                    if (validator.hasOwnProperty('priority')) {
+                        priority = validator.priority;
+                    } else {
+                        priority = 0;
+                    }
+                    if (priority >= highestPriority) {
+                        highestPriority = priority;
+                        if (result.hasOwnProperty('target_url')) {
+                            target_url = result.target_url;
+                        }
+                    };
+                    log.log(sha + ': ' + validator.name + ' complete.');
                     runNextValidation();
-                } else {
-                    log.log(sha + ': Running commit validator: ' + validator.name);
-                    validatorsRun.push(validator);
-                    validator.validate(sha, githubUser, statusHistory, repoClient, function(err, result) {
-                        if (err) {
-                            console.error('Error running commit validator "' + validator.name + '"');
-                            console.error(err);
-                            return callback(null, sha, {
-                                state: 'error',
-                                description: 'Error running commit validator "' + validator.name + '": ' + err.message
-                            }, repoClient);
-                        }
-                        log.log(sha + ': ' + validator.name + ' result was ' + coloredStatus(result.state));
-                        if (result.state !== 'success') {
-                            // Upon failure, we set a flag that will skip the
-                            // remaining validators and post a failure status.
-                            validationFailed = true;
-                            callback(null, sha, result, repoClient);
-                        }
-                        // This code is just allowing the different validators to
-                        // fight over which one will provide the "Details" URL
-                        // that gets displayed on the Github PR.
-                        if (validator.hasOwnProperty('priority')) {
-                            priority = validator.priority;
-                        } else {
-                            priority = 0;
-                        }
-                        if (priority >= highestPriority) {
-                            highestPriority = priority;
-                            if (result.hasOwnProperty('target_url')) {
-                                target_url = result.target_url;
-                            }
-                        };
-                        log.log(sha + ': ' + validator.name + ' complete.');
-                        runNextValidation();
-                    });
-                }
+                });
             } else {
                 log.log(sha + ': Validation complete.');
                 // No more validators left in the array, so we can complete the

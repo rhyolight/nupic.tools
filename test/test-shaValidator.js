@@ -1,15 +1,9 @@
 var assert = require('assert'),
-    shaValidator = require('./../utils/sha-validator.js')
+    shaValidator = require('./../utils/sha-validator.js'),
     repoClientStub = {
         'getAllStatusesFor': function(sha, callback) { callback(null, 'fakeStatusHistory'); },
         'validators': {
             'excludes': []
-        }
-    },
-    repoClientSecondStub = {
-        'getAllStatusesFor': function(sha, callback) { callback(null, 'fakeStatusHistory'); },
-        'validators': {
-            'exclude': ['FirstValidator']
         }
     },
     validatorsStub = [
@@ -47,18 +41,7 @@ describe('shaValidator test', function() {
             assert(!err, 'Should not be an error');
             assert.equal(sha, 'testSHA', 'in shaValidator.performCompleteValidation :  wrong sha in output!');
             assert.equal(output.state, 'success', 'in shaValidator.performCompleteValidation :  wrong state in output :  Not success!');
-            //assert.equal(output.target_url, 'correctTargetURL', 'in shaValidator.performCompleteValidation :  wrong target_url in output!');
             assert.equal(output.description, 'All validations passed (FirstValidator, SecondValidator)', 'in shaValidator.performCompleteValidation :  wrong description in output!');
-            done();
-        });
-    });
-    it('Testing with two validators. One configured to be excluded.', function(done) {
-        shaValidator.performCompleteValidation('testSHA', 'carlfriess', repoClientSecondStub, validatorsStub, false, function(err, sha, output, repoClient) {
-            assert(!err, 'Should not be an error');
-            assert.equal(sha, 'testSHA', 'in shaValidator.performCompleteValidation :  wrong sha in output!');
-            assert.equal(output.state, 'success', 'in shaValidator.performCompleteValidation :  wrong state in output :  Not success!');
-            assert.equal(output.target_url, 'otherTargetURL', 'in shaValidator.performCompleteValidation :  wrong target_url in output!');
-            assert.equal(output.description, 'All validations passed (SecondValidator [1 skipped])', 'in shaValidator.performCompleteValidation :  wrong description in output!');
             done();
         });
     });

@@ -6,12 +6,10 @@ var fs = require('fs'),
     proxyquire = require('proxyquire'),
     MOCK_CONFIG = 'mock-config.yaml',
     MOCK_CONFIG_REPOS_MISSING = 'mock-config-no-global-repos.yaml',
-    MOCK_CONFIG_LOCAL_VALIDATORS = 'mock-config-with-local-validators.yaml',
     MOCK_USER_CONFIG = 'mock-user-config.yaml',
     MOCK_GLOBAL_REPOS = 'mock-global-repos.yaml',
     mockConfig,
     mockConfigNoRepos,
-    mockConfigWithValidators,
     mockUserConfig,
     mockGlobalRepos,
     GH_USERNAME = process.env.GH_USERNAME,
@@ -21,7 +19,6 @@ var fs = require('fs'),
 // Prep the mock configs.
 mockConfig = fs.readFileSync('test/mockData/' + MOCK_CONFIG, 'utf-8');
 mockConfigNoRepos = fs.readFileSync('test/mockData/' + MOCK_CONFIG_REPOS_MISSING, 'utf-8');
-mockConfigWithValidators = fs.readFileSync('test/mockData/' + MOCK_CONFIG_LOCAL_VALIDATORS, 'utf-8');
 mockUserConfig = fs.readFileSync('test/mockData/' + MOCK_USER_CONFIG, 'utf-8');
 mockGlobalRepos = fs.readFileSync('test/mockData/' + MOCK_GLOBAL_REPOS, 'utf-8');
 
@@ -64,7 +61,6 @@ describe('configuration reader', function() {
                 existsSync: function(path) {
                     if (path == 'conf/' + MOCK_CONFIG
                         || path == 'conf/' + MOCK_CONFIG_REPOS_MISSING
-                        || path == 'conf/' + MOCK_CONFIG_LOCAL_VALIDATORS
                         || path.indexOf(testUserString) == path.length - testUserString.length) {
                         return true;
                     } else {
@@ -74,8 +70,6 @@ describe('configuration reader', function() {
                 readFileSync: function(path) {
                     if (path == 'conf/' + MOCK_CONFIG) {
                         return mockConfig;
-                    } else if (path == 'conf/' + MOCK_CONFIG_LOCAL_VALIDATORS) {
-                        return mockConfigWithValidators;
                     } else if (path == 'conf/' + MOCK_CONFIG_REPOS_MISSING) {
                         return mockConfigNoRepos;
                     } else if (path.indexOf(testUserString) == path.length - testUserString.length) {
@@ -142,11 +136,10 @@ describe('configuration reader', function() {
                 expect(err).to.not.exist;
                 _.each(['numenta/nupic.cerebro2', 'numenta/nupic.cerebro2.server', 'numenta/nupic.cerebro'], function(projectKey) {
                     var monitorConfig = config.monitors[projectKey];
-                    expect(monitorConfig).to.include.keys('validators');
-                    expect(monitorConfig.validators).to.include.keys('exclude');
-                    expect(monitorConfig.validators.exclude).to.be.instanceOf(Array);
-                    expect(monitorConfig.validators.exclude).to.have.length(1);
-                    expect(monitorConfig.validators.exclude[0]).to.equal('Travis Validator');
+                    expect(monitorConfig).to.include.keys(['username', 'password', 'contributors']);
+                    expect(monitorConfig.username).to.equal('mockghusername');
+                    expect(monitorConfig.password).to.equal('mockghpassword');
+                    expect(monitorConfig.contributors).to.equal('http://numenta.org/resources/contributors.csv');
                 });
                 process.env.USER = USER;
                 done();
