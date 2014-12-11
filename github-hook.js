@@ -69,6 +69,12 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
     }
 }
 
+function isExternalContext(context) {
+    return ! _.contains(_.map(dynamicValidatorModules, function(validator) {
+        return validator.name;
+    }), context);
+}
+
 /**
  * Given a request payload from Github, and the RepositoryClient object associated
  * with this repo, this function retrieves all the known statuses for the repo,
@@ -77,11 +83,13 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
  * @param sha {string} SHA of the tip of the PR.
  * @param state {string} State of the PR (opened, closed, merged, etc)
  * @param branches {Object[]} List of branches that came with the state change
+ * @param context {string} State change context, used to figure out if this
+ *                         was caused by a validator owned by this server.
  * @param repoClient {RepositoryClient} Repo client associated with this repo this
  *                                      PR was created against.
  * @param cb {function} Will be called when PR has been handled.
  */
-function handleStateChange(sha, state, branches, repoClient, cb) {
+function handleStateChange(sha, state, branches, context, repoClient, cb) {
     var isMaster,
         buildHooks = undefined;
     log.log('State of ' + sha + ' has changed to "' + state + '".');
@@ -102,8 +110,8 @@ function handleStateChange(sha, state, branches, repoClient, cb) {
             executeCommand(hookCmd);
         });
     }
-    // Otherwise we process this as any other state change.
-    else {
+    // Only process state changes caused by external services (not this server).
+    else if (isExternalContext(context)) {
         repoClient.getCommit(sha, function(err, commit) {
             shaValidator.performCompleteValidation(
                 sha,
@@ -254,7 +262,7 @@ function initializer(clients) {
                 whenDone();
             } else {
                 handleStateChange(
-                    sha, payload.state, payload.branches, repoClient, whenDone
+                    sha, payload.state, payload.branches, payload.context, repoClient, whenDone
                 );
             }
         }
