@@ -90,13 +90,6 @@ function constructRepoClients(prWebhookUrl, config, callback) {
                     log.error('Error during webhook confirmation for ' + repoClient.toString());
                     die(err);
                 } else {
-                    if (hook) {
-                        log.warn('Webhook created on ' + repoClient.toString() + ':\n'
-                            + '\tfor "' + hook.events.join(', ') + '"\n'
-                            + '\ton ' + hook.config.url);
-                    } else {
-                        log.info('Webhook exists for ' + repoClient.toString());
-                    }
                     count++;
                 }
                 repoClients[monitorKey] = repoClient;

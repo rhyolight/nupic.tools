@@ -27,13 +27,14 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         base = pullRequest.base,
         sha = head.sha;
 
-    log.info('Received pull request "' + action + '" from ' + githubUser);
+    log.info('Received pull request "' + action + '" on '
+        + repoClient.toString() + ' from ' + githubUser);
 
     if (action == 'closed') {
         // If this pull request just got merged, we need to re-trigger the
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
-            log.info('A PR just merged. Re-validating open pull requests...');
+            log.debug('A PR just merged. Re-validating open pull requests...');
             contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) {
@@ -46,7 +47,6 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
             if (cb) { cb(); }
         }
     } else {
-
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
             if (external) {
                 shaValidator.performCompleteValidation(
@@ -61,7 +61,7 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
                 // ignore statuses that were created by this server
                 // TODO it should never get into this branch, but it's seen in production
                 // just log it for further investigation
-                log.warn('Ignoring status created by nupic.tools for ' + sha + '...');
+                log.debug('Ignoring status created by nupic.tools for ' + sha + '...');
                 if (cb) { cb(); }
             }
         });
@@ -105,7 +105,6 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
         buildHooks = getBuildHooksForMonitor(repoClient);
         log.info('Github build success event on ' + repoClient + '/');
         // Only process when there is a build hook defined.
-
         _.each(buildHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
@@ -123,13 +122,13 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
             );
         });
     } else {
-        log.debug('Ignoring state change.');
+        log.info('Ignoring state change.');
     }
 }
 
 function executeCommand(command) {
     exec(command, function (error, stdout, stderr) {
-        log.verbose(stdout);
+        log.debug(stdout);
         if (stderr) { log.warn(stderr); }
         if (error !== null) {
             log.error('command execution error: ' + error);
@@ -179,7 +178,6 @@ function handlePushEvent(payload, monitorConfig) {
         branch, tag,
         pushHooks = getPushHooksForMonitor(monitorConfig),
         tagHooks = getTagHooksForMonitor(monitorConfig);
-
     if (refType == 'heads') {
         branch = refName;
     } else if (refType == 'tags') {
@@ -187,7 +185,7 @@ function handlePushEvent(payload, monitorConfig) {
     }
 
     if (branch) {
-        log.info('Github push event on ' + repoSlug + '/' + branch);
+        log.info('GitHub push event on ' + repoSlug + ':' + branch);
         // Only process pushes to master, and only when there is a push hook defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookCmd) {
@@ -195,7 +193,7 @@ function handlePushEvent(payload, monitorConfig) {
             });
         }
     } else if (tag) {
-        log.info('Github tag event on ' + repoSlug + '/' + tag);
+        log.info('Github tag event on ' + repoSlug + ':' + tag);
         _.each(tagHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
@@ -244,7 +242,7 @@ function initializer(clients) {
             return res.end();
         }
 
-        log.verbose("Github hook executing for " + repoClient.toString().magenta);
+        log.info("Github hook executing for " + repoClient.toString().magenta);
 
         function whenDone(err) {
             if (err) {
@@ -257,7 +255,6 @@ function initializer(clients) {
         // If the payload has a 'state', that means this is a state change.
         if (payload.state) {
             sha = payload.sha;
-            log.debug('** Handle State Change **');
             // Ignore state changes on closed pull requests
             if (payload.pullRequest && payload.pullRequest.state == 'closed') {
                 log.warn('Ignoring status of closed pull request (' + sha + ')');
@@ -271,7 +268,6 @@ function initializer(clients) {
         // If the payload has a 'pull_request', well that means this is a pull
         // request.
         else if (payload.pull_request) {
-            log.debug('** Handle Pull Request Update **');
             handlePullRequest(
                 payload.action,
                 payload.pull_request,
@@ -281,7 +277,6 @@ function initializer(clients) {
         }
         // Assuming everything else is a push event.
         else if (payload.ref) {
-            log.debug('** Handle Push Event **');
             handlePushEvent(payload, repoClient);
             whenDone();
         } else {

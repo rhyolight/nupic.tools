@@ -55,7 +55,7 @@ function read(configFile, callback) {
         config.repos = repos;
 
         if (userConfig) {
-            ['host', 'port', 'logDirectory'].forEach(function(key) {
+            ['host', 'port', 'logDirectory', 'logLevel', 'githooks'].forEach(function(key) {
                 if (userConfig[key] !== undefined) {
                     config[key] = userConfig[key];
                 }

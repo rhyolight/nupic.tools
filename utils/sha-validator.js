@@ -14,8 +14,8 @@ function coloredStatus(status) {
 }
 
 function postNewNupicStatus(statusContext, sha, statusDetails, repoClient) {
-    log.info(sha + ': Posting new NuPIC Status ('
-        + coloredStatus(statusDetails.state) + ') to github');
+    log.info('Posting new NuPIC Status ('
+        + coloredStatus(statusDetails.state) + ') for ' + sha + ' to GitHub');
     var payload = {
         user: repoClient.org,
         repo: repoClient.repo,
@@ -33,7 +33,7 @@ function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
     repoClient.getAllOpenPullRequests(function(err, prs) {
         var count = 0,
             errors = null;
-        log.info('Found ' + prs.length + ' open pull requests...');
+        log.debug('Found ' + prs.length + ' open pull requests...');
         prs.map(function(pr) { return pr.number; }).forEach(function(pr_number) {
             repoClient.triggerTravisForPullRequest(pr_number, function(err, success) {
                 count++;
