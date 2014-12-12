@@ -7,7 +7,7 @@
   logDirectory: "logs"
 
   # Default log level.
-  logLevel: "debug"
+  logLevel: "info"
 
   # Monitored repositories are loaded from this URL. If they have travis enabled,
   # it is assumed they should have the travis-validator enabled.

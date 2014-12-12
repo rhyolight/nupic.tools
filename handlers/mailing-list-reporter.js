@@ -1,7 +1,7 @@
 var jsdom = require("jsdom"),
     nodeURL = require("url"),
     jsonUtils = require('../utils/json'),
-    logger = require('../utils/logger').logger,
+    log = require('../utils/logger').logger,
     template = require('../utils/template'),
     monthNames = [ "January", "February", "March", "April", "May", "June", 
     "July", "August", "September", "October", "November", "December"],
@@ -71,12 +71,12 @@ function getMailingList (mailingList,screenScrapes,data) {
 
         var urls = buildUrlObjectsSince(mailingList.archiveUrl, mailingList.startmonth, mailingList.startyear);
 
-        logger.debug('Fetching ML data from %s', rosterUrl);
+        log.debug('Fetching ML data from %s', rosterUrl);
 
         // Get subscribers
         var deferredRoster = q.defer();
         jsdom.env(rosterUrl, ["http://code.jquery.com/jquery.js"], function (errors, window) {
-            logger.verbose('Received data from %s', rosterUrl);
+            log.debug('Received data from %s', rosterUrl);
             numberSubsHTML = window.$("center b font");
             numberSubsNoDigest = parseInt((numberSubsHTML[0]).innerHTML.split(" ").shift());
             numberSubsDigest = parseInt((numberSubsHTML[1]).innerHTML.split(" ").shift());
@@ -86,9 +86,9 @@ function getMailingList (mailingList,screenScrapes,data) {
         screenScrapes.push(deferredRoster.promise);
         urls.forEach(function(url) {
             var deferred = q.defer();
-            logger.debug('Fetching ML data from %s', url.url);
+            log.debug('Fetching ML data from %s', url.url);
             jsdom.env(url.url,["http://code.jquery.com/jquery.js"], function (errors, window) {
-                logger.verbose('Received data from %s', url.url);
+                log.debug('Received data from %s', url.url);
                 var temp = {};
                 temp.name = monthNames[url.month] + " " + url.year;
                 temp.month = url.month;

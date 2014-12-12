@@ -130,8 +130,9 @@ RepositoryClient.prototype.rateLimit = function(callback) {
 };
 
 RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback) {
-    var me = this;
-    log.info('%s/%s web hook check', this.org, this.repo);
+    var me = this,
+        slug = this.getRepoSlug();
+    log.debug('Finding existing web hooks for %s...', slug);
     this.github.repos.getHooks({
         user: this.org,
         repo: this.repo
@@ -142,7 +143,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             console.error(err);
             return callback(err);
         }
-        log.info('Found %s webhooks', hooks.length);
+        log.debug('Found %s webhooks for %s', hooks.length, slug);
         hooks.forEach(function(hook) {
             if (hook.config && url == hook.config.url) {
                 // So there is a webhook for this repo, but it might not have the events we want.
@@ -151,7 +152,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                 } else {
                     hookRemovers.push(function(hookRemovalCallback) {
                         // Remove the old webhook
-                        log.warn('Removing webhook %s for %s.', hook.id, url);
+                        log.warn('%s: Removing webhook %s for %s.', slug, hook.id, url);
                         me.github.repos.deleteHook({
                             user: me.org,
                             repo: me.repo,
@@ -183,7 +184,8 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                         if (err) {
                             return callback(err);
                         }
-                        log.warn('Created web hook %s for %s, monitoring events "%s"', data.id, data.config.url, data.events.join(', '));
+                        log.warn('%s: created web hook %s for %s, monitoring events "%s"',
+                            slug, data.id, data.config.url, data.events.join(', '));
                         callback();
                     });
                 } else {
@@ -197,11 +199,12 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
 };
 
 RepositoryClient.prototype.triggerTravisForPullRequest = function(pull_request_number, callback) {
-    var travis = this.travis;
-    log.debug('Attempting to trigger a build for' + this.toString()
-        + ' PR#' + pull_request_number);
+    var travis = this.travis,
+        slug = this.getRepoSlug(),
+        prUrl = 'https://github.com/' + slug + '/pull/' + pull_request_number;
+    log.debug('Finding builds for ' + slug + '...');
     travis.builds({
-        slug: this.getRepoSlug(),
+        slug: slug,
         event_type: 'pull_request'
     }, function(err, response) {
         var pr = _.find(response.builds, function(build) {
@@ -210,7 +213,7 @@ RepositoryClient.prototype.triggerTravisForPullRequest = function(pull_request_n
         if (! pr) {
             return callback(new Error('No pull request with #' + pull_request_number));
         }
-        log.info("Triggering build restart for PR#" + pull_request_number);
+        log.debug('Triggering build for ' + prUrl);
         travis.builds.restart({ id: pr.id }, function(err, restartResp) {
             if (err) return callback(err);
             callback(null, restartResp.result)
@@ -232,7 +235,7 @@ RepositoryClient.prototype._getRemainingPages = function(lastData, allDataOld, c
             me._getRemainingPages(newData, allData, callback)
         }
     });
-}
+};
 
 RepositoryClient.prototype.getRepoSlug = function() {
     return this.org + '/' + this.repo;

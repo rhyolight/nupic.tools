@@ -40,13 +40,12 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
     logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
     logger.info('nupic.tools server starting...');
     logger.info('nupic.tools will use the following configuration:');
-    logger.debug('nupic.tools configuration:');
-    console.log(utils.sterilizeConfig(cfg));
+    logger.debug('nupic.tools configuration:\n', utils.sterilizeConfig(cfg));
 
     // enable web server logging; pipe those log messages through our logger
     logStream = {
         write: function(message){
-            logger.info(message);
+            logger.debug(message);
         }
     };
 
@@ -68,17 +67,17 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         // This puts the Github webhook handler into place
         app.use(githubHookPath, githubHookHandler.initializer(repoClients));
 
-        logger.verbose('The following validators are active:');
+        logger.info('The following validators are active:');
         activeValidators = githubHookHandler.getValidators();
         activeValidators.forEach(function(v) {
-            logger.verbose('\t==> ' + v);
+            logger.info('\t==> ' + v);
         });
 
         dynamicHttpHandlerModules = utils.initializeModulesWithin(HANDLER_DIR);
 
         // Loads all the modules within the handlers directory, and registers the URLs
         // the declared, linked to their request handler functions.
-        logger.verbose('The following URL handlers are active:');
+        logger.info('The following URL handlers are active:');
         dynamicHttpHandlerModules.forEach(function(handlerConfig) {
             var urls = Object.keys(handlerConfig);
             urls.forEach(function(url) {
@@ -86,7 +85,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
                     name = handler.title,
                     msg = '\t==> ' + name + ' listening for url pattern: ' + url;
                 if (! handler.disabled) {
-                    logger.verbose(msg);
+                    logger.info(msg);
                     app.get(url, handler);
                 }
             });

@@ -52,11 +52,11 @@ function getCommitsFor(repoClient, allContributors, callback) {
     log.debug('Received %s contributors for %s.', allContributors.length, repoClientName);
 
     if(allCommits = cache.get(cacheTag + repoClientName)) {
-        log.verbose('Reusing cached commits for %s...', repoClientName)
+        log.debug('Reusing cached commits for %s...', repoClientName)
         shapeStatistics(repoClient, allContributors, allCommits, callback);
     }
     else {
-        log.verbose('Fetching commits for %s...', repoClientName)
+        log.debug('Fetching commits for %s...', repoClientName)
         repoClient.getCommits(function(error, allCommits) {
             if (error) {
                 return callback(error);
@@ -77,11 +77,11 @@ function getContributorsFor(repoClient, callback) {
         repoClientName =    repoClient.toString();
 
     if(allContributors = cache.get(cacheTag + repoClientName)) {
-        log.verbose('Reusing cached contributors for %s...', repoClientName);
+        log.debug('Reusing cached contributors for %s...', repoClientName);
         getCommitsFor(repoClient, allContributors, callback);
     }
     else {
-        log.verbose('Fetching contributors for %s...', repoClientName);
+        log.debug('Fetching contributors for %s...', repoClientName);
         repoClient.getContributors(function(error, allContributors) {
             if (error) {
                 return callback(error);
