@@ -408,8 +408,8 @@ describe('contributor validator', function() {
             assert.ifError(err, 'error thrown during validation');
             assert(status.state, 'no status state returned');
             assert.equal(status.state, 'failure', 'wrong status state');
-            assert.equal(status.description, 'urgurthemaster must sign the Numenta Contributor License');
-            assert.equal(status.target_url, 'http://numenta.org/licenses/cl/')
+            assert.equal(status.description, 'urgurthemaster must sign the Contributor License');
+            assert.equal(status.target_url, 'http://numenta.org/licenses/cl/');
             done();
         });
     });
