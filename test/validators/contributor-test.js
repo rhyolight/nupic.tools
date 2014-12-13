@@ -393,7 +393,7 @@ contribStub.getAll = function(url, cb) {
 
 describe('contributor validator', function() {
     it('has a proper "name" property', function() {
-        assert.equal(contributor.name, 'Contributor Validator', 'Wrong commit validator name');
+        assert.equal(contributor.name, 'Contributor Validator', 'Wrong validator name');
     });
     it('returns success state when user exists', function(done) {
         contributor.validate('sha', 'rhyolight', githubClientStub, function(err, status) {
