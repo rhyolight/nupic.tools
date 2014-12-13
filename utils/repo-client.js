@@ -122,6 +122,16 @@ RepositoryClient.prototype.getCommit = function(sha, callback) {
     }, callback);
 };
 
+RepositoryClient.prototype.compareCommits = function(base, head, callback) {
+    this.github.repos.compareCommits({
+        user: this.org,
+        repo: this.repo,
+        base: base,
+        head: head
+    }, callback);
+};
+
+
 RepositoryClient.prototype.rateLimit = function(callback) {
     this.github.misc.rateLimit({
         user: this.org,

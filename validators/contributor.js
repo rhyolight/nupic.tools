@@ -12,9 +12,9 @@ function isContributor(name, roster) {
                  }, false);
 }
 
-function validator(sha, githubUser, githubClient, callback) {
+function validator(sha, githubUser, repoClient, callback) {
     log.info('Validating contributor "' + githubUser + '"...');
-    contribUtil.getAll(githubClient.contributorsUrl, function(err, contributors) {
+    contribUtil.getAll(repoClient.contributorsUrl, function(err, contributors) {
         var response = {};
         // If there's an error, we'll handle it like a validation failure.
         if (err) {
@@ -22,11 +22,11 @@ function validator(sha, githubUser, githubClient, callback) {
             response.description = 'Error running ' + NAME + ': ' + err;
         } else if (isContributor(githubUser, contributors)) {
             response.state = 'success';
-            response.description = githubUser + ' has signed the Numenta Contributor License';
+            response.description = githubUser + ' signed the Contributor License';
             response.target_url = 'http://numenta.org/contributors/';
         } else {
             response.state = 'failure';
-            response.description = githubUser + ' must sign the Numenta Contributor License';
+            response.description = githubUser + ' must sign the Contributor License';
             response.target_url = 'http://numenta.org/licenses/cl/';
         }
         log.debug(response);
