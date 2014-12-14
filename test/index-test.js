@@ -19,7 +19,7 @@ configReaderStub = {
 describe('main program', function() {
     describe('when initially loaded', function() {
         it('sends the right config file to configReader', function() {
-            proxyquire('./../program', {
+            proxyquire('./../index', {
                 './utils/general': utilStub,
                 './utils/config-reader': {read: function(configPath) {
                     assert.equal(configPath, path.join(__dirname, '..', 'conf/config.yaml'), 'Wrong default configuration path.');
@@ -31,7 +31,7 @@ describe('main program', function() {
             utilStub.constructRepoClients = function(prWebhook, cfg) {
                 assert.equal(prWebhook, 'http://host:666/github-hook', 'Bad Github web hook url created');
             };
-            proxyquire('./../program', {
+            proxyquire('./../index', {
                 './utils/general': utilStub,
                 './utils/config-reader': configReaderStub
             });
