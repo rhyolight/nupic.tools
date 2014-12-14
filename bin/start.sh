@@ -2,7 +2,7 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cwd=`pwd`
-tools_server="${script_dir}/../program.js"
+tools_server="${script_dir}/../index.js"
 
 # Forever is a node.js tool used to keep programs running.
 
