@@ -1,6 +1,7 @@
-var contribUtil = require('../utils/contributors'),
-    log = require('../utils/logger').logger,
-    NAME = 'Contributor Validator';
+var contribUtil = require('../utils/contributors')
+  , log = require('../utils/logger').logger
+  , NAME = 'Contributor Validator'
+  ;
 
 function isContributor(name, roster) {
     if (name == null || name == undefined) return false;
@@ -26,7 +27,8 @@ function validator(sha, githubUser, repoClient, callback) {
             response.target_url = 'http://numenta.org/contributors/';
         } else {
             response.state = 'failure';
-            response.description = githubUser + ' must sign the Contributor License';
+            response.description = githubUser 
+                + ' must sign the Contributor License';
             response.target_url = 'http://numenta.org/licenses/cl/';
         }
         log.debug(response);

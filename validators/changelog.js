@@ -1,13 +1,15 @@
-var _ = require('underscore'),
-    log = require('../utils/logger').logger,
-    NAME = 'CHANGELOG Validator',
-    CHANGELOG_WIKI = 'https://github.com/numenta/nupic/wiki/CHANGELOG-Guidelines',
-    HEAD = 'HEAD';
+var _ = require('underscore')
+  , log = require('../utils/logger').logger
+  , NAME = 'CHANGELOG Validator'
+  , CHANGELOG_WIKI = 'https://github.com/numenta/nupic/wiki/CHANGELOG-Guidelines'
+  , HEAD = 'HEAD'
+  ;
 
 function getRepoChangelogFile(client, callback) {
     client.getContent('', function(err, rootContents) {
-        var changelogFile,
-            changelogName;
+        var changelogFile
+          , changelogName
+          ;
         if (err) return callback(err);
         changelogFile = _.find(rootContents, function(file) {
             return file.name.indexOf('CHANGELOG') > -1;
@@ -42,7 +44,8 @@ function validator(sha, githubUser, repoClient, callback) {
                 response.description = '"' + changelogName + '" was updated';
             } else {
                 response.state = 'pending';
-                response.description = 'Update ' + changelogName + ' if necessary';
+                response.description = 'Update ' + changelogName 
+                    + ' if necessary';
             }
             callback(null, response);
         });
