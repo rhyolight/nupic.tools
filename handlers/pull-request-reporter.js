@@ -1,18 +1,15 @@
-var url = require('url'),
-    qs = require('querystring'),
-    utils = require('../utils/general'),
-    jsonUtils = require('../utils/json'),
-    repoClients;
+var url = require('url')
+  , qs = require('querystring')
+  , utils = require('../utils/general')
+  , jsonUtils = require('../utils/json')
+  , repoClients
+  ;
 
 function getPullRequestsFrom(ghClient, callback) {
     ghClient.getAllOpenPullRequests(function(err, prs) {
-        // Attach current statuses to each request
         var out = [];
-
-        if (err) {
-            return callback(err);
-        }
-
+        if (err) return callback(err);
+        // Attach current statuses to each request
         function addNextPullRequestStatuses() {
             var pr = prs.pop();
             if (! pr) {
@@ -27,22 +24,25 @@ function getPullRequestsFrom(ghClient, callback) {
                 });
             }
         }
-
         addNextPullRequestStatuses();
     });
 }
 
 function prReporter(req, res) {
-    var reqUrl = url.parse(req.url),
-        query = qs.parse(reqUrl.query),
-        allPrs = {},
-        repoKeys = Object.keys(repoClients),
-        totalReposToQuery = Object.keys(repoClients).length;
+    var reqUrl = url.parse(req.url)
+      , query = qs.parse(reqUrl.query)
+      , allPrs = {}
+      , repoKeys = Object.keys(repoClients)
+      , totalReposToQuery = Object.keys(repoClients).length
+      ;
 
     if (query.repo) {
         if (! repoClients[query.repo]) {
             return jsonUtils.renderErrors(
-                [new Error('Server is not monitoring repository identified by "' + query.repo + '".')], 
+                [new Error(
+                    'Server is not monitoring repository identified by "' 
+                    + query.repo + '".'
+                )], 
                 res, query.callback
             );
         }
@@ -60,7 +60,9 @@ function prReporter(req, res) {
             allPrs[client.toString()] = prs;
             if (Object.keys(allPrs).length == totalReposToQuery) {
                 // Done!
-                var out = totalReposToQuery == 1 ? allPrs[Object.keys(allPrs)[0]] : allPrs;
+                var out = totalReposToQuery == 1 
+                                               ? allPrs[Object.keys(allPrs)[0]] 
+                                               : allPrs;
                 jsonUtils.render(out, res, query.callback);
             }
         });

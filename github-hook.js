@@ -1,15 +1,15 @@
 // This module provides a request handler for HTTP calls from Github web hooks.
-var fs = require('fs'),
-    _ = require('underscore'),
-    log = require('./utils/logger').logger,
-    utils = require('./utils/general'),
-    contributors = require('./utils/contributors'),
-    shaValidator = require('./utils/sha-validator'),
-    exec = require('child_process').exec,
-    VALIDATOR_DIR = 'validators',
-    // All the validator modules
-    dynamicValidatorModules = [],
-    repoClients;
+var fs = require('fs')
+  , _ = require('underscore')
+  , log = require('./utils/logger').logger
+  , utils = require('./utils/general')
+  , contributors = require('./utils/contributors')
+  , shaValidator = require('./utils/sha-validator')
+  , exec = require('child_process').exec
+  , VALIDATOR_DIR = 'validators'
+  , // All the validator modules
+    dynamicValidatorModules = []
+  , repoClients;
 
 /**
  * Given the payload for a Github pull request notification and the associated
@@ -22,46 +22,48 @@ var fs = require('fs'),
  * @param cb {function} Will be called when PR has been handled.
  */
 function handlePullRequest(action, pullRequest, repoClient, cb) {
-    var githubUser = pullRequest.user.login,
-        head = pullRequest.head,
-        base = pullRequest.base,
-        sha = head.sha;
+    var githubUser = pullRequest.user.login
+      , head = pullRequest.head
+      , base = pullRequest.base
+      , sha = head.sha;
 
-    log.info('Received pull request "' + action + '" on '
-        + repoClient.toString() + ' from ' + githubUser);
+    log.info(
+        'Received pull request "%s" on %s from %s',
+        action, repoClient.toString(), githubUser
+    );
 
     if (action == 'closed') {
         // If this pull request just got merged, we need to re-trigger the
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
             log.debug('A PR just merged. Re-validating open pull requests...');
-            contributors.getAll(repoClient.contributorsUrl,
+            contributors.getAll(repoClient.contributorsUrl, 
                 function(err, contributors) {
-                    if (err) {
-                        return cb(err);
-                    }
-                    shaValidator.triggerTravisBuildsOnAllOpenPullRequests(repoClient);
+                    if (err) return cb(err);
+                    shaValidator.triggerTravisBuildsOnAllOpenPullRequests(
+                      repoClient
+                    );
                 }
             );
         } else {
-            if (cb) { cb(); }
+            if (cb) cb();
         }
     } else {
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
             if (external) {
                 shaValidator.performCompleteValidation(
-                    sha,
-                    githubUser,
-                    repoClient,
-                    dynamicValidatorModules,
-                    true,
-                    cb
+                    sha
+                  , githubUser
+                  , repoClient
+                  , dynamicValidatorModules
+                  , true
+                  , cb
                 );
             } else {
                 // ignore statuses that were created by this server
-                // TODO it should never get into this branch, but it's seen in production
-                // just log it for further investigation
-                log.debug('Ignoring status created by nupic.tools for ' + sha + '...');
+                log.debug(
+                    'Ignoring status created by nupic.tools for %s...', sha
+                );
                 if (cb) { cb(); }
             }
         });
@@ -90,9 +92,9 @@ function isExternalContext(context) {
  * @param cb {function} Will be called when PR has been handled.
  */
 function handleStateChange(sha, state, branches, context, repoClient, cb) {
-    var isMaster,
-        buildHooks = undefined;
-    log.info('State of ' + sha + ' has changed to "' + state + '" for "' + context + '".');
+    var isMaster
+      , buildHooks = undefined;
+    log.info('State of %s has changed to "%s" for "%s".', sha, state, context);
     // A "success" state means that a build passed. If the build passed on the
     // master branch, we need to trigger a "build" hook, which might execute a
     // script to run in the /bin directory.
@@ -103,7 +105,7 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
     // build success hook.
     if (state == 'success' && isMaster) {
         buildHooks = getBuildHooksForMonitor(repoClient);
-        log.info('Github build success event on ' + repoClient + '/');
+        log.info('Github build success event on %s', repoClient.toString());
         // Only process when there is a build hook defined.
         _.each(buildHooks, function(hookCmd) {
             executeCommand(hookCmd);
@@ -113,12 +115,12 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
     else if (isExternalContext(context)) {
         repoClient.getCommit(sha, function(err, commit) {
             shaValidator.performCompleteValidation(
-                sha,
-                commit.author.login,
-                repoClient,
-                dynamicValidatorModules,
-                true,
-                cb
+                sha
+              , commit.author.login
+              , repoClient
+              , dynamicValidatorModules
+              , true
+              , cb
             );
         });
     } else {
@@ -131,7 +133,7 @@ function executeCommand(command) {
         log.debug(stdout);
         if (stderr) { log.warn(stderr); }
         if (error !== null) {
-            log.error('command execution error: ' + error);
+            log.error('command execution error: %s', error);
         }
     });
 }
@@ -170,14 +172,15 @@ function getTagHooksForMonitor(monitorConfig) {
  * @param monitorConfig {object} Repository monitor configuration.
  */
 function handlePushEvent(payload, monitorConfig) {
-    var repoSlug = payload.repository.organization
-            + '/' + payload.repository.name,
-        ref = payload.ref.split('/'),
-        refType = ref[1],
-        refName = ref[2],
-        branch, tag,
-        pushHooks = getPushHooksForMonitor(monitorConfig),
-        tagHooks = getTagHooksForMonitor(monitorConfig);
+    var repoSlug = payload.repository.organization + '/' + payload.repository.name
+      , ref = payload.ref.split('/')
+      , refType = ref[1]
+      , refName = ref[2]
+      , branch = undefined
+      , tag = undefined
+      , pushHooks = getPushHooksForMonitor(monitorConfig)
+      , tagHooks = getTagHooksForMonitor(monitorConfig)
+      ;
     if (refType == 'heads') {
         branch = refName;
     } else if (refType == 'tags') {
@@ -185,15 +188,16 @@ function handlePushEvent(payload, monitorConfig) {
     }
 
     if (branch) {
-        log.info('GitHub push event on ' + repoSlug + ':' + branch);
-        // Only process pushes to master, and only when there is a push hook defined.
+        log.info('GitHub push event on %s:%s', repoSlug, branch);
+        // Only process pushes to master, and only when there is a push hook 
+        // defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookCmd) {
                 executeCommand(hookCmd);
             });
         }
     } else if (tag) {
-        log.info('Github tag event on ' + repoSlug + ':' + tag);
+        log.info('Github tag event on %s:%s', repoSlug, tag);
         _.each(tagHooks, function(hookCmd) {
             executeCommand(hookCmd);
         });
@@ -217,8 +221,11 @@ function initializer(clients) {
      */
     return function(req, res) {
         // Get what repository Github is telling us about
-        var payload = JSON.parse(req.body.payload),
-            sha, repoName, repoClient;
+        var payload = JSON.parse(req.body.payload)
+          , sha = undefined
+          , repoName = undefined
+          , repoClient = undefined
+          ;
 
         if (payload.name) {
             repoName = payload.name;
@@ -226,7 +233,8 @@ function initializer(clients) {
             repoName = payload.repository.full_name;
         } else if (payload.repository) {
             // Probably a push event.
-            repoName = payload.repository.owner.name + '/' + payload.repository.name;
+            repoName = payload.repository.owner.name 
+                + '/' + payload.repository.name;
         } else {
             log.error('Cannot understand github payload!\n')
             log.warn(req.body.payload);
@@ -238,11 +246,11 @@ function initializer(clients) {
         // If this application is not monitoring the repo Github is telling us
         // about, just ignore it.
         if (! repoClient) {
-            log.warn('No repository client available for ' + repoName);
+            log.warn('No repository client available for %s', repoName);
             return res.end();
         }
 
-        log.info("Github hook executing for " + repoClient.toString().magenta);
+        log.info("Github hook executing for %s", repoClient.toString().magenta);
 
         function whenDone(err) {
             if (err) {
@@ -257,11 +265,16 @@ function initializer(clients) {
             sha = payload.sha;
             // Ignore state changes on closed pull requests
             if (payload.pullRequest && payload.pullRequest.state == 'closed') {
-                log.warn('Ignoring status of closed pull request (' + sha + ')');
+                log.warn('Ignoring status of closed pull request (%s)', sha);
                 whenDone();
             } else {
                 handleStateChange(
-                    sha, payload.state, payload.branches, payload.context, repoClient, whenDone
+                    sha
+                  , payload.state
+                  , payload.branches
+                  , payload.context
+                  , repoClient
+                  , whenDone
                 );
             }
         }
@@ -269,10 +282,10 @@ function initializer(clients) {
         // request.
         else if (payload.pull_request) {
             handlePullRequest(
-                payload.action,
-                payload.pull_request,
-                repoClient,
-                whenDone
+                payload.action
+              , payload.pull_request
+              , repoClient
+              , whenDone
             );
         }
         // Assuming everything else is a push event.
@@ -280,7 +293,7 @@ function initializer(clients) {
             handlePushEvent(payload, repoClient);
             whenDone();
         } else {
-            log.error('** Unknown GitHub Webhook Payload! **');
+            log.error('** Unknown GitHub Webhook Payload! **'.red);
             log.error(payload);
             whenDone();
         }

@@ -1,10 +1,11 @@
-var request = require('request'),
-    monitors;
+var request = require('request')
+  , monitors;
 
 function csvToJson(csv) {
-    var contributors = [],
-        lines = csv.split('\n'),
-        header = lines.shift().split(',');
+    var contributors = []
+      , lines = csv.split('\n')
+      , header = lines.shift().split(',')
+      ;
     lines.forEach(function(line) {
         var obj = {},
             person = line.split(',');

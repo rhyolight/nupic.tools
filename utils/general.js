@@ -1,9 +1,10 @@
-var fs = require('fs'),
-    path = require('path'),
-    _ = require('underscore'),
-    RepositoryClient = require('./repo-client'),
-    NUPIC_STATUS_PREFIX = 'NuPIC Status:',
-    log = require('./logger').logger;
+var fs = require('fs')
+  , path = require('path')
+  , _ = require('underscore')
+  , RepositoryClient = require('./repo-client')
+  , NUPIC_STATUS_PREFIX = 'NuPIC Status:'
+  , log = require('./logger').logger
+  ;
 
 /* Logs error and exits. */
 function die(err) {
@@ -17,8 +18,9 @@ function die(err) {
  * @return {Array} Modules loaded.
  */
 function initializeModulesWithin(dir) {
-    var output = [];
-    var fullDir = path.join(__dirname, '..', dir);
+    var output = []
+      , fullDir = path.join(__dirname, '..', dir)
+      ;
     fs.readdirSync(fullDir).forEach(function(fileName) {
         var moduleName = fileName.split('.').shift();
         if(fileName.charAt(0) != "."
@@ -44,19 +46,21 @@ function initializeModulesWithin(dir) {
  * "org/repo".
  */
 function constructRepoClients(prWebhookUrl, config, callback) {
-    var repoClients = {},
-        uncheckedClients = [],
-        globalValidatorConfig = config.validators,
-        monitorKeys = _.keys(config.monitors),
-        count = 0;
+    var repoClients = {}
+      , uncheckedClients = []
+      , globalValidatorConfig = config.validators
+      , monitorKeys = _.keys(config.monitors)
+      , count = 0
+      ;
 
     // Set up one github client for each repo target in config.
     _.each(monitorKeys, function(monitorKey) {
-        var monitorConfig = config.monitors[monitorKey],
-            keyParts = monitorKey.split('/'),
-            org = keyParts.shift(),
-            repo = keyParts.shift(),
-            repoClient;
+        var monitorConfig = config.monitors[monitorKey]
+          , keyParts = monitorKey.split('/')
+          , org = keyParts.shift()
+          , repo = keyParts.shift()
+          , repoClient
+          ;
 
         monitorConfig.organization = org;
         monitorConfig.repository = repo;
@@ -70,14 +74,15 @@ function constructRepoClients(prWebhookUrl, config, callback) {
             + repoClient.toString().magenta);
 
         uncheckedClients.push(repoClient);
-
     });
 
     // Check the rate limit before making any real calls.
     uncheckedClients[0].rateLimit(function(err, rateLimit) {
         log.debug(rateLimit.rate);
-        log.debug('GitHub API calls remaining before rate limit exceeded: %s.', rateLimit.rate.remaining);
-        log.debug('Github API rate limit resets at %s.', new Date(rateLimit.rate.reset * 1000).toString());
+        log.debug('GitHub API calls remaining before rate limit exceeded: %s.',
+            rateLimit.rate.remaining);
+        log.debug('Github API rate limit resets at %s.', 
+            new Date(rateLimit.rate.reset * 1000).toString());
         if (rateLimit.rate.remaining == 0) {
             throw Error('Github API Rate Limit Exceeded!');
         }
@@ -85,18 +90,23 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         // Now confirm all webhooks are ready.
         _.each(uncheckedClients, function(repoClient, i) {
             var monitorKey = monitorKeys[i];
-            repoClient.confirmWebhookExists(prWebhookUrl, config.githooks, function(err, hook) {
-                if (err) {
-                    log.error('Error during webhook confirmation for ' + repoClient.toString());
-                    die(err);
-                } else {
-                    count++;
+            repoClient.confirmWebhookExists(
+                prWebhookUrl
+              , config.githooks
+              , function(err, hook) {
+                    if (err) {
+                        log.error('Error during webhook confirmation for ' 
+                            + repoClient.toString());
+                        die(err);
+                    } else {
+                        count++;
+                    }
+                    repoClients[monitorKey] = repoClient;
+                    if (count == (Object.keys(config.monitors).length))  {
+                        callback(repoClients);
+                    }
                 }
-                repoClients[monitorKey] = repoClient;
-                if (count == (Object.keys(config.monitors).length))  {
-                    callback(repoClients);
-                }
-            });
+            );
         });
     });
 
@@ -105,8 +115,9 @@ function constructRepoClients(prWebhookUrl, config, callback) {
 /* Sorts github statuses by created_at time */
 function sortStatuses(statuses) {
     return statuses.sort(function(a, b) {
-        var aDate = new Date(a.created_at),
-            bDate = new Date(b.created_at);
+        var aDate = new Date(a.created_at)
+          , bDate = new Date(b.created_at)
+          ;
         if (aDate > bDate) {
             return -1;
         } else if (aDate < bDate) {
@@ -150,10 +161,10 @@ function sterilizeConfig(config) {
 }
 
 module.exports = {
-    initializeModulesWithin: initializeModulesWithin,
-    constructRepoClients: constructRepoClients,
-    sterilizeConfig: sterilizeConfig,
-    sortStatuses: sortStatuses,
-    lastStatusWasExternal: lastStatusWasExternal,
-    __module: module // for unit testing and mocking require()
+    initializeModulesWithin: initializeModulesWithin
+  , constructRepoClients: constructRepoClients
+  , sterilizeConfig: sterilizeConfig
+  , sortStatuses: sortStatuses
+  , lastStatusWasExternal: lastStatusWasExternal
+  , __module: module // for unit testing and mocking require()
 };

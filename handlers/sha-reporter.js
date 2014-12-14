@@ -1,17 +1,19 @@
-var url = require('url'),
-    qs = require('querystring'),
-    utils = require('../utils/general'),
-    jsonUtils = require('../utils/json'),
-    repoClients;
+var url = require('url')
+  , qs = require('querystring')
+  , utils = require('../utils/general')
+  , jsonUtils = require('../utils/json')
+  , repoClients
+  ;
 
 function shaReporter(req, res) {
-    var reqUrl = url.parse(req.url),
-        query = qs.parse(reqUrl.query),
-        sha = query.sha,
-        repo = query.repo,
-        jsonPCallback = query.callback,
-        repoClient = repoClients[repo],
-        errors = [];
+    var reqUrl = url.parse(req.url)
+      , query = qs.parse(reqUrl.query)
+      , sha = query.sha
+      , repo = query.repo
+      , jsonPCallback = query.callback
+      , repoClient = repoClients[repo]
+      , errors = []
+      ;
 
     if (! repo) {
         errors.push(new Error('Missing "repo" query parameter.'));
@@ -24,9 +26,9 @@ function shaReporter(req, res) {
     }
 
     repoClient.github.statuses.get({
-        user: repoClient.org,
-        repo: repoClient.repo,
-        sha: sha
+        user: repoClient.org
+      , repo: repoClient.repo
+      , sha: sha
     }, function(err, statuses) {
         jsonUtils.render(utils.sortStatuses(statuses), res, jsonPCallback);
     });

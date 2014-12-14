@@ -1,29 +1,33 @@
-var fs = require('fs'),
-    url = require('url'),
-    qs = require('querystring'),
-    _ = require('underscore'),
-    tmpl = require('../utils/template'),
-    AnsiConverter = require('ansi-to-html'),
-    converter = new AnsiConverter(),
-    log = require('../utils/logger').logger;
+var fs = require('fs')
+  , url = require('url')
+  , qs = require('querystring')
+  , _ = require('underscore')
+  , tmpl = require('../utils/template')
+  , AnsiConverter = require('ansi-to-html')
+  , converter = new AnsiConverter()
+  , log = require('../utils/logger').logger
+  ;
 
 function logViewer(req, res) {
-    var linesToRead = 100,
-        reqUrl = url.parse(req.url),
-        query = qs.parse(reqUrl.query);
+    var linesToRead = 100
+      , reqUrl = url.parse(req.url)
+      , query = qs.parse(reqUrl.query)
+      ;
     if (query.lines) {
         linesToRead = query.lines;
     }
     log.query({
-        limit: linesToRead,
-        order: 'desc'
+        limit: linesToRead
+      , order: 'desc'
     }, function(err, results) {
+        var ansiLines = undefined
+          , htmlOut = undefined;
         if (err) throw err;
-        var ansiLines = _.map(results.file, function(line) {
+        ansiLines = _.map(results.file, function(line) {
             line.message = converter.toHtml(line.message);
             return line;
         });
-        var htmlOut = tmpl('logs.html', { logs: ansiLines });
+        htmlOut = tmpl('logs.html', { logs: ansiLines });
         res.setHeader('Content-Type', 'text/html');
         res.setHeader('Content-Length', htmlOut.length);
         res.end(htmlOut);

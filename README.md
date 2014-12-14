@@ -34,7 +34,7 @@ Github username and password are required to access the [Github API](http://deve
 
 ### Start the server:
 
-    node program.js
+    npm start
 
 Now hit http://localhost:8081 (or whatever port you specified in the configuration file) and you should see a status page reporting what repositories are being monitored, as well as what extra services are provided by [HTTP Handlers](#http_handler_addons).
 
