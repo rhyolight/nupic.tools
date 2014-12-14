@@ -1,19 +1,21 @@
-var cache = require('memory-cache'),
-    jsonUtils = require('../utils/json'),
-    nodeURL = require('url'),
-    log = require('../utils/logger').logger,
-
-    cacheTTL =      1000 * 60 * 60 * 24,    // 24 hour cache
-    repoClients =   null;
+var cache = require('memory-cache')
+  , jsonUtils = require('../utils/json')
+  , nodeURL = require('url')
+  , log = require('../utils/logger').logger
+  // 24 hour cache
+  , cacheTTL = 1000 * 60 * 60 * 24
+  , repoClients = undefined
+  ;
 
 
 /**
  * Shape all the Contributor and Commit data into useable stats output.
  */
 function shapeStatistics(repoClient, allContributors, allCommits, callback) {
-    var commitsPerPerson =  {},
-        contributorsOut =   null,
-        repoClientName =    repoClient.toString();
+    var commitsPerPerson = {}
+      , contributorsOut = undefined
+      , repoClientName = repoClient.toString()
+      ;
 
     log.debug('Received %s commits for %s.', allCommits.length, repoClientName);
 
@@ -32,9 +34,9 @@ function shapeStatistics(repoClient, allContributors, allCommits, callback) {
             commits = commitsPerPerson[nextContrib.login];
         }
         return {
-            "login": nextContrib.login,
-            "contributions": nextContrib.contributions,
-            "commits": commits
+            "login": nextContrib.login
+          , "contributions": nextContrib.contributions
+          , "commits": commits
         };
     });
 
@@ -45,23 +47,23 @@ function shapeStatistics(repoClient, allContributors, allCommits, callback) {
  * Get Commit data from cache or API
  */
 function getCommitsFor(repoClient, allContributors, callback) {
-    var cacheTag =          'commits/',
-        allCommits =        null,
-        repoClientName =    repoClient.toString();
+    var cacheTag = 'commits/'
+      , allCommits = undefined
+      , repoClientName = repoClient.toString()
+      ;
 
-    log.debug('Received %s contributors for %s.', allContributors.length, repoClientName);
+    log.debug('Received %s contributors for %s.',
+        allContributors.length, repoClientName);
 
     if(allCommits = cache.get(cacheTag + repoClientName)) {
         log.debug('Reusing cached commits for %s...', repoClientName)
         shapeStatistics(repoClient, allContributors, allCommits, callback);
-    }
-    else {
+    } else {
         log.debug('Fetching commits for %s...', repoClientName)
         repoClient.getCommits(function(error, allCommits) {
-            if (error) {
-                return callback(error);
-            }
-            log.debug('Received %s commits for %s.', allCommits.length, repoClientName);
+            if (error) return callback(error);
+            log.debug('Received %s commits for %s.',
+                allCommits.length, repoClientName);
             cache.put(cacheTag + repoClientName, allCommits, cacheTTL);
             shapeStatistics(repoClient, allContributors, allCommits, callback);
         });
@@ -72,9 +74,10 @@ function getCommitsFor(repoClient, allContributors, callback) {
  * Get Contributor data from cache or API
  */
 function getContributorsFor(repoClient, callback) {
-    var cacheTag =          'contributors/',
-        allContributors =   null,
-        repoClientName =    repoClient.toString();
+    var cacheTag = 'contributors/'
+      , allContributors = undefined
+      , repoClientName = repoClient.toString()
+      ;
 
     if(allContributors = cache.get(cacheTag + repoClientName)) {
         log.debug('Reusing cached contributors for %s...', repoClientName);
@@ -83,9 +86,7 @@ function getContributorsFor(repoClient, callback) {
     else {
         log.debug('Fetching contributors for %s...', repoClientName);
         repoClient.getContributors(function(error, allContributors) {
-            if (error) {
-                return callback(error);
-            }
+            if (error) return callback(error);
             cache.put(cacheTag + repoClientName, allContributors, cacheTTL);
             getCommitsFor(repoClient, allContributors, callback);
        });
@@ -96,10 +97,11 @@ function getContributorsFor(repoClient, callback) {
  * Get list of Contributors
  */
 function extractContributorsFromRepositoryClients(clients, callback) {
-    var repoNames = Object.keys(clients),
-        contributorsOut = {},
-        errors = [],
-        responseCount = 0;
+    var repoNames = Object.keys(clients)
+      , contributorsOut = {}
+      , errors = []
+      , responseCount = 0
+      ;
 
     repoNames.forEach(function(repoName) {
         getContributorsFor(repoClients[repoName], function(error, contributors) {
@@ -132,12 +134,13 @@ function writeResponse(response, errors, dataOut, jsonpCallback) {
  * Main function handles split between single or batch mode
  */
 function contributorStatistics (request, response)    {
-    var dataOut = {},
-        errors = [],
-        urlQuery = nodeURL.parse(request.url, true).query,
-        jsonpCallback = urlQuery.callback,
-        repo = urlQuery.repo || "all",
-        repoClient;
+    var dataOut = {}
+      , errors = []
+      , urlQuery = nodeURL.parse(request.url, true).query
+      , jsonpCallback = urlQuery.callback
+      , repo = urlQuery.repo || "all"
+      , repoClient
+      ;
 
     if(repo == "all")   {
         // Report on all repositories
@@ -152,10 +155,8 @@ function contributorStatistics (request, response)    {
 
     } else {
         // A single repository was specified
-
         if (repoClients[repo]) {
             repoClient = repoClients[repo];
-
             getContributorsFor(repoClient, function(error, contributors) {
                 if (error) {
                     errors.push(error);
@@ -168,9 +169,7 @@ function contributorStatistics (request, response)    {
             errors.push(new Error("Not monitoring this repository '" + repo + "'"));
             writeResponse(response, errors, dataOut, jsonpCallback);
         }
-
     }
-
 }
 
 

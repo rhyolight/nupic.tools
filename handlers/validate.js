@@ -1,25 +1,28 @@
-var fs = require('fs'),
-    path = require('path'),
-    url = require('url'),
-    qs = require('querystring'),
-    _ = require('underscore'),
-    shaValidator = require('../utils/sha-validator'),
-    contributors = require('../utils/contributors'),
-    jsonUtils = require('../utils/json'),
-    VALIDATOR_DIR = 'validators',
-    validators = [],
-    repoClients;
+var fs = require('fs')
+  , path = require('path')
+  , url = require('url')
+  , qs = require('querystring')
+  , _ = require('underscore')
+  , shaValidator = require('../utils/sha-validator')
+  , contributors = require('../utils/contributors')
+  , jsonUtils = require('../utils/json')
+  , VALIDATOR_DIR = 'validators'
+  , validators = []
+  , repoClients
+  ;
 
 function initializeValidators(dir) {
     var fullDir = path.join(__dirname, '..', dir);
     fs.readdirSync(fullDir).forEach(function(validator) {
-        validators.push(require('./../' + dir + '/' + validator.split('.').shift()));
+        validators.push(
+            require('./../' + dir + '/' + validator.split('.').shift())
+        );
     });
 }
 
 function findClientFor(sha, callback) {
-    var clients = Object.keys(repoClients),
-        found = false;
+    var clients = Object.keys(repoClients)
+      , found = false;
     function next() {
         var nextClient;
         if (found) return;
@@ -41,14 +44,15 @@ function findClientFor(sha, callback) {
 
 function validateSha(req, res) {
 
-    var reqUrl = url.parse(req.url),
-        query = qs.parse(reqUrl.query),
-        sha = query.sha,
-        postStatus,
-        repo = query.repo,
-        jsonPCallback = query.callback,
-        repoClient = repoClients[repo],
-        errors = [];
+    var reqUrl = url.parse(req.url)
+      , query = qs.parse(reqUrl.query)
+      , sha = query.sha
+      , postStatus
+      , repo = query.repo
+      , jsonPCallback = query.callback
+      , repoClient = repoClients[repo]
+      , errors = []
+      ;
 
     postStatus = query.postStatus
         && (query.postStatus == '1' || query.postStatus.toLowerCase() == 'true');
@@ -66,7 +70,9 @@ function validateSha(req, res) {
     findClientFor(sha, function(client, payload) {
         var committer;
         if (! client) {
-            errors.push(new Error('No match for sha "' + sha + '" in any known repositories.'));
+            errors.push(new Error(
+                'No match for sha "' + sha + '" in any known repositories.'
+            ));
             return jsonUtils.renderErrors(errors, res, jsonPCallback);
         }
         committer = payload.author ? payload.author.login : false;
@@ -76,13 +82,17 @@ function validateSha(req, res) {
                 var htmlOut = '<html><body>\n<h1>SHA Validation report</h1>\n';
                 htmlOut += '<h2>' + repoClient.toString() + '</h2>\n';
                 htmlOut += '<h2>' + sha + '</h2>\n';
-                _.each(validationResponses, function (statusDetails, validatorName) {
-                    htmlOut += '<h3>' + validatorName + ': ' + statusDetails.state + '</h3>\n';
-                    htmlOut += '<p>' + statusDetails.description + '</p>\n';
-                    if (statusDetails.target_url) {
-                        htmlOut += '<p><a href="' + statusDetails.target_url + '">Details</a></p>\n';
+                _.each(validationResponses, 
+                    function (statusDetails, validatorName) {
+                        htmlOut += '<h3>' + validatorName + ': ' 
+                            + statusDetails.state + '</h3>\n';
+                        htmlOut += '<p>' + statusDetails.description + '</p>\n';
+                        if (statusDetails.target_url) {
+                            htmlOut += '<p><a href="' + statusDetails.target_url 
+                                + '">Details</a></p>\n';
+                        }
                     }
-                });
+                );
                 htmlOut += '\n</body></html>';
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Content-Length', htmlOut.length);

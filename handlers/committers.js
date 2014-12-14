@@ -1,18 +1,18 @@
-var GitHubApi = require('github'),
-    _ = require('underscore'),
-    async = require('async'),
-    json = require('../utils/json'),
-    committerTeamId = 418155,
-    gh;
+var GitHubApi = require('github')
+  , _ = require('underscore')
+  , async = require('async')
+  , json = require('../utils/json')
+  , COMMITTER_TEAM_ID = 418155
+  , gh = undefined
+  ;
 
 function getGitHubUser(username, callback) {
-//    gh.user.get({username: username}, callback);
     gh.user.getFrom({user: username}, callback);
 }
 
 function requestHandler(req, res) {
     var jsonpCallback = req.query.callback;
-    gh.orgs.getTeamMembers({id: committerTeamId}, function(err, members) {
+    gh.orgs.getTeamMembers({id: COMMITTER_TEAM_ID}, function(err, members) {
         var userFetchers;
         if (err) {
             json.renderErrors(err, res);
@@ -34,16 +34,16 @@ function requestHandler(req, res) {
 }
 
 function initializer(_repoClients, _httpHandlers, config, activeValidators) {
-    var ghUsername = config.monitors[_.keys(config.monitors)[0]].username,
-        ghPassword = config.monitors[_.keys(config.monitors)[0]].password;
+    var ghUsername = config.monitors[_.keys(config.monitors)[0]].username
+      , ghPassword = config.monitors[_.keys(config.monitors)[0]].password;
     gh = new GitHubApi({
-        version: '3.0.0',
-        timeout: 5000
+        version: '3.0.0'
+      , timeout: 5000
     });
     gh.authenticate({
-        type: 'basic',
-        username: ghUsername,
-        password: ghPassword
+        type: 'basic'
+      , username: ghUsername
+      , password: ghPassword
     });
     return requestHandler;
 }
