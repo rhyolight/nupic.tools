@@ -1,11 +1,13 @@
-var fs = require('fs'),
-    path = require('path'),
-    winston = require('winston'),
-    initialized = false;
+var fs = require('fs')
+  , path = require('path')
+  , winston = require('winston')
+  , initialized = false
+  ;
 
 function initializeLogger(logDirectory, logLevel) {
-    var logFileName = new Date().toISOString() + '.log',
-        logPath;
+    var logFileName = new Date().toISOString() + '.log'
+      , logPath
+      ;
     if (! initialized) {
         if (! logDirectory) {
             logDirectory = path.join(__dirname, 'logs');
@@ -35,6 +37,6 @@ function initializeLogger(logDirectory, logLevel) {
 }
 
 module.exports = {
-    logger: winston,
-    initialize: initializeLogger
+    logger: winston
+  , initialize: initializeLogger
 };

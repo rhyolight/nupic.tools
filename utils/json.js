@@ -8,8 +8,9 @@ function renderJson(output, res) {
 }
 
 function renderJsonp(output, cbName, res) {
-    var out = output,
-        textOut;
+    var out = output
+      , textOut
+      ;
     if (typeof output == 'object') {
         out = JSON.stringify(output);
     }
@@ -37,8 +38,8 @@ function render(payload, response, callbackName) {
 }
 
 module.exports = {
-    render: render,
-    renderJson: renderJson,
-    renderJsonp: renderJsonp,
-    renderErrors: renderErrors
+    render: render
+  , renderJson: renderJson
+  , renderJsonp: renderJsonp
+  , renderErrors: renderErrors
 };

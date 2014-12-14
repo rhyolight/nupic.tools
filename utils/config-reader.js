@@ -1,18 +1,20 @@
-var fs = require('fs'),
-    _ = require('underscore'),
-    request = require('request'),
-    log = require('./logger').logger,
-    yaml = require('js-yaml'),
-    GH_USERNAME = process.env.GH_USERNAME,
-    GH_PASSWORD = process.env.GH_PASSWORD;
+var fs = require('fs')
+  , _ = require('underscore')
+  , request = require('request')
+  , log = require('./logger').logger
+  , yaml = require('js-yaml')
+  , GH_USERNAME = process.env.GH_USERNAME
+  , GH_PASSWORD = process.env.GH_PASSWORD
+  , OVERRIDE_PARAMS = ['host', 'port', 'logDirectory', 'logLevel', 'githooks']
+  ;
 
 function readConfigFileIntoObject(path) {
+    var raw, obj;
     if (! fs.existsSync(path)) {
         log.warn('Config file "' + path + '" does not exist!');
         return;
     }
-    var raw = fs.readFileSync(path, 'utf-8');
-    var obj;
+    raw = fs.readFileSync(path, 'utf-8');
     try {
         obj = yaml.safeLoad(raw);
     } catch(e) {
@@ -25,9 +27,9 @@ function createMonitorConfigurations(repos, hooks, contributors) {
     var monitors = {};
     repos.forEach(function(repo) {
         var monitor = {
-            username: GH_USERNAME,
-            password: GH_PASSWORD,
-            contributors: contributors
+            username: GH_USERNAME
+          , password: GH_PASSWORD
+          , contributors: contributors
         };
         // Skip repos explicitly marked as "monitor: false"
         if (typeof(repo.monitor) == 'boolean' && ! repo.monitor) {
@@ -43,11 +45,14 @@ function createMonitorConfigurations(repos, hooks, contributors) {
 }
 
 function read(configFile, callback) {
-    var username = process.env.USER.toLowerCase(),
-        configSplit = configFile.split('.'),
-        userFile = configSplit.slice(0, configSplit.length - 1).join('.') + '-' + username + '.yaml',
-        config = readConfigFileIntoObject(configFile),
-        userConfig = null;
+    var username = process.env.USER.toLowerCase()
+      , configSplit = configFile.split('.')
+      , userFile = configSplit.slice(
+            0, configSplit.length - 1
+        ).join('.') + '-' + username + '.yaml'
+      , config = readConfigFileIntoObject(configFile)
+      , userConfig = null
+      ;
 
     userConfig = readConfigFileIntoObject(userFile);
 
@@ -55,7 +60,7 @@ function read(configFile, callback) {
         config.repos = repos;
 
         if (userConfig) {
-            ['host', 'port', 'logDirectory', 'logLevel', 'githooks'].forEach(function(key) {
+            OVERRIDE_PARAMS.forEach(function(key) {
                 if (userConfig[key] !== undefined) {
                     config[key] = userConfig[key];
                 }
@@ -67,7 +72,8 @@ function read(configFile, callback) {
         }
 
         config.monitors = createMonitorConfigurations(config.repos,
-            config.hooks, config.contributors);
+            config.hooks, config.contributors
+        );
 
         callback(null, config);
     }
@@ -85,7 +91,6 @@ function read(configFile, callback) {
             if (err) {
                 return callback(err);
             }
-
             repos = yaml.safeLoad("---\n" + body).repos;
             processReposConfig(repos);
         });
@@ -95,7 +100,8 @@ function read(configFile, callback) {
 
 // Fail fast.
 if (! GH_USERNAME || ! GH_PASSWORD) {
-    throw Error('Both GH_USERNAME and GH_PASSWORD environment variables are required for nupic.tools to run.' +
+    throw Error('Both GH_USERNAME and GH_PASSWORD environment variables are '
+        + 'required for nupic.tools to run.' +
         '\nThese are necessary for making Github API calls.');
 }
 
