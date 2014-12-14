@@ -13,8 +13,6 @@ First, install nodejs and npm. Checkout this codebase and change into the `nupic
 
     npm install .
 
-> *NOTE*: You may need to use `sudo` for the above command, because the `forever` npm module is installed globally.
-
 ## Running it
 
 ### Configuration
@@ -82,4 +80,4 @@ The NuPIC project uses this functionality to run a script that generates API doc
 
 ## Make sure it stays running!
 
-Installing this package will also install the [forever](https://npmjs.org/package/forever) module globally. Scripts are provided within `./bin` to start, stop, and restart this program as a forever application.
+Scripts are provided within `./bin` to start, stop, and restart this program as a [forever](https://npmjs.org/package/forever) application.
