@@ -413,4 +413,13 @@ describe('contributor validator', function() {
             done();
         });
     });
+    it('returns success state for numenta-ci', function (done) {
+        contributor.validate('sha', 'numenta-ci', githubClientStub, function (err, status) {
+            assert.ifError(err, 'error thrown during validation');
+            assert(status.state, 'no status state returned');
+            assert.equal(status.state, 'success', 'wrong status state');
+            done();
+        });
+    });
+
 });

@@ -1,6 +1,7 @@
 var contribUtil = require('../utils/contributors')
   , log = require('../utils/logger').logger
   , NAME = 'Contributor Validator'
+  , WHITELIST = ['numenta-ci']
   ;
 
 function isContributor(name, roster) {
@@ -15,6 +16,14 @@ function isContributor(name, roster) {
 
 function validator(sha, githubUser, repoClient, callback) {
     log.info('Validating contributor "' + githubUser + '"...');
+    // If github user is on the whitelist, we approve.
+    if (WHITELIST.indexOf(githubUser) > -1) {
+        return callback(null, {
+            state: 'success'
+          , description: githubUser + ' is whitelisted as a contributor.'
+          , target_url: 'https://github.com/' + githubUser
+        });
+    }
     contribUtil.getAll(repoClient.contributorsUrl, function(err, contributors) {
         var response = {};
         // If there's an error, we'll handle it like a validation failure.
