@@ -135,6 +135,7 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
 }
 
 function executeCommand(command) {
+    log.warn('Executing hook command "%s"', command);
     exec(command, function (error, stdout, stderr) {
         log.debug(stdout);
         if (stderr) { log.warn(stderr); }
