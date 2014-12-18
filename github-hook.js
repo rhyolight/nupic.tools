@@ -114,6 +114,12 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
     // Only process state changes caused by external services (not this server).
     else if (isExternalContext(context)) {
         repoClient.getCommit(sha, function(err, commit) {
+            if (! commit.author) {
+                log.error('No commit author exists in the payload!', commit);
+                return cb(
+                    new Error('No commit author specified for sha: ' + sha)
+                );
+            }
             shaValidator.performCompleteValidation(
                 sha
               , commit.author.login
