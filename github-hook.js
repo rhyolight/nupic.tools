@@ -9,7 +9,9 @@ var fs = require('fs')
   , VALIDATOR_DIR = 'validators'
   , // All the validator modules
     dynamicValidatorModules = []
-  , repoClients;
+  , repoClients
+  , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
+  ;
 
 /**
  * Given the payload for a Github pull request notification and the associated
@@ -103,7 +105,7 @@ function handleStateChange(sha, state, branches, context, repoClient, cb) {
     });
     // If this was a successful build of the master branch, we want to trigger the
     // build success hook.
-    if (state == 'success' && isMaster) {
+    if (state == 'success' && isMaster && context == TRAVIS_CONTEXT) {
         buildHooks = getBuildHooksForMonitor(repoClient);
         log.info('Github build success event on %s', repoClient.toString());
         // Only process when there is a build hook defined.
