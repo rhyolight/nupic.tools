@@ -1,4 +1,5 @@
-var fixesRegex = /fixes #[\d]*/i
+var fixesRegex =
+        /(fixes #[\d]*)||(fixes https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10})/i
   , log = require('../utils/logger').logger
   , NAME = 'Fixes Issue Validator'
   ;
@@ -32,10 +33,10 @@ function validator(sha, githubUser, repoClient, callback) {
         }
 
         pr = prs.items[0];
-        fixMatch = hasFixLinkToIssue(pr.body)
+        fixMatch = hasFixLinkToIssue(pr.body);
         if (fixMatch) {
             response.state = 'success';
-            response.description = 'Found "' + fixMatch[0] + '".';
+            response.description = 'PR is properly linked to an issue';
         }
         callback(null, response);
     });
