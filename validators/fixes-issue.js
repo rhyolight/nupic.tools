@@ -10,13 +10,20 @@ function hasFixLinkToIssue(text) {
 
 function validator(sha, githubUser, repoClient, callback) {
     var response = {
-        target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
+        state: 'failure'
+      , description: 'This PR must be linked to an issue.'
+      , target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
     };
     log.info('Validating that PR fixes an issue');
     repoClient.searchIssues(sha, function(err, prs) {
         var pr, fixMatch;
         if (err) {
             return callback(err);
+        }
+
+        if (prs.total_count ==0) {
+            // No PRs, so return the default error response.
+            return callback(null, response);
         }
 
         if (prs.total_count > 1) {
@@ -29,9 +36,6 @@ function validator(sha, githubUser, repoClient, callback) {
         if (fixMatch) {
             response.state = 'success';
             response.description = 'Found "' + fixMatch[0] + '".';
-        } else {
-            response.state = 'failured';
-            response.description = 'This PR must be linked to an issue.'
         }
         callback(null, response);
     });
