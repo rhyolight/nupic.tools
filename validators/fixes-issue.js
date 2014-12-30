@@ -1,11 +1,13 @@
-var fixesRegex =
-        /(fixes #[\d]*)||(fixes https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10})/i
+var fixesNumberRegex =
+        /fixes #[\d]*/i
+  , fixesUrlRegex =
+        /fixes https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
   , log = require('../utils/logger').logger
   , NAME = 'Fixes Issue Validator'
   ;
 
 function hasFixLinkToIssue(text) {
-    return text.match(fixesRegex);
+    return !! (text.match(fixesNumberRegex) || text.match(fixesUrlRegex));
 }
 
 
@@ -23,7 +25,8 @@ function validator(sha, githubUser, repoClient, callback) {
         }
 
         if (prs.total_count ==0) {
-            // No PRs, so return the default error response.
+            // No PR for this commit, so what's the point?
+            response.description = 'No PR for commit.';
             return callback(null, response);
         }
 
