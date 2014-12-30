@@ -132,6 +132,14 @@ RepositoryClient.prototype.compareCommits = function(base, head, callback) {
     }, callback);
 };
 
+RepositoryClient.prototype.searchIssues = function(query, callback) {
+    this.github.search.issues({
+        user: this.org
+      , repo: this.repo
+      , q: query
+    }, callback);
+};
+
 RepositoryClient.prototype.getContent = function(path, callback) {
     this.github.repos.getContent({
         user: this.org
