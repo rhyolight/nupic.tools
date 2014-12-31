@@ -6,9 +6,21 @@ var fixesNumberRegex =
   , NAME = 'Fixes Issue Validator'
   ;
 
-function hasFixLinkToIssue(text) {
+function hasFixLinkToIssue(prNumber, text) {
+    var numberMatch, urlMatch;
     if (! text) return false;
-    return !! (text.match(fixesNumberRegex) || text.match(fixesUrlRegex));
+    numberMatch = text.match(fixesNumberRegex);
+    console.log(numberMatch);
+    urlMatch = text.match(fixesUrlRegex);
+    console.log(urlMatch);
+    // Make sure those sneaky contributors aren't linking to the PR itself.
+    if (numberMatch && numberMatch[0].indexOf(prNumber) > -1) {
+        numberMatch = false;
+    }
+    if (urlMatch && urlMatch[0].indexOf(prNumber) > -1) {
+        urlMatch = false;
+    }
+    return (numberMatch || urlMatch);
 }
 
 
@@ -46,7 +58,7 @@ function validator(sha, githubUser, repoClient, callback) {
         }
 
         pr = prs.items[0];
-        fixMatch = hasFixLinkToIssue(pr.body);
+        fixMatch = hasFixLinkToIssue(pr.number, pr.body);
         if (fixMatch) {
             response.state = 'success';
             response.description = 'PR is properly linked to an issue';
