@@ -1,7 +1,7 @@
 var fixesNumberRegex =
-        /fixes #[\d]*/i
+        /fixes:? #[\d]*/i
   , fixesUrlRegex =
-        /fixes https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
+        /fixes:? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
   , log = require('../utils/logger').logger
   , NAME = 'Fixes Issue Validator'
   ;
