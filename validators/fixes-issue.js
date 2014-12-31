@@ -10,9 +10,7 @@ function hasFixLinkToIssue(prNumber, text) {
     var numberMatch, urlMatch;
     if (! text) return false;
     numberMatch = text.match(fixesNumberRegex);
-    console.log(numberMatch);
     urlMatch = text.match(fixesUrlRegex);
-    console.log(urlMatch);
     // Make sure those sneaky contributors aren't linking to the PR itself.
     if (numberMatch && numberMatch[0].indexOf(prNumber) > -1) {
         numberMatch = false;
