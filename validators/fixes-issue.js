@@ -19,6 +19,13 @@ function validator(sha, githubUser, repoClient, callback) {
         , target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
       };
     log.info('Validating that PR fixes an issue');
+    // If this PR was created by this server using the ci account, we'll
+    // automatically approve it.
+    if (githubUser == 'numenta-ci') {
+        response.state = 'success';
+        response.description = 'This PR was created by nupic.tools.'
+        return callback(null, response);
+    }
     repoClient.searchIssues(searchString, function(err, prs) {
         var pr, fixMatch;
         if (err) {
