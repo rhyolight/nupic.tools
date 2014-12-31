@@ -33,6 +33,13 @@ function validator(sha, githubUser, repoClient, callback) {
         target_url: CHANGELOG_WIKI
     };
     log.info('Validating CHANGELOG was updated between %s and %s ...', HEAD, sha);
+    // If this PR was created by this server using the ci account, we'll
+    // automatically approve it.
+    if (githubUser == 'numenta-ci') {
+        response.state = 'success';
+        response.description = 'This PR was created by nupic.tools.'
+        return callback(null, response);
+    }
     getRepoChangelogFile(repoClient, function(err, changelogName) {
         repoClient.compareCommits(HEAD, sha, function(err, comparison) {
             if (err) return callback(err);
