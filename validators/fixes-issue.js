@@ -12,13 +12,14 @@ function hasFixLinkToIssue(text) {
 
 
 function validator(sha, githubUser, repoClient, callback) {
-    var response = {
-        state: 'failure'
-      , description: 'This PR must be linked to an issue.'
-      , target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
-    };
+    var searchString = sha + '+state:open'
+      , response = {
+          state: 'failure'
+        , description: 'This PR must be linked to an issue.'
+        , target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
+      };
     log.info('Validating that PR fixes an issue');
-    repoClient.searchIssues(sha, function(err, prs) {
+    repoClient.searchIssues(searchString, function(err, prs) {
         var pr, fixMatch;
         if (err) {
             return callback(err);
@@ -32,7 +33,8 @@ function validator(sha, githubUser, repoClient, callback) {
 
         if (prs.total_count > 1) {
             // What to do?
-            log.warn('Found a SHA linked to more than one PR!', prs);
+            log.warn('Found a SHA linked to more than one PR!');
+            console.log(prs.items);
         }
 
         pr = prs.items[0];
