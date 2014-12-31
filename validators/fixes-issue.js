@@ -7,6 +7,7 @@ var fixesNumberRegex =
   ;
 
 function hasFixLinkToIssue(text) {
+    if (! text) return false;
     return !! (text.match(fixesNumberRegex) || text.match(fixesUrlRegex));
 }
 
