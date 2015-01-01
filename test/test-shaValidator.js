@@ -4,6 +4,14 @@ var assert = require('chai').assert,
     repoClientStub = {
         'validators': {
             'excludes': []
+        },
+        searchIssues: function(query, callback) {
+            callback(null, {
+                items: [{
+                    number: 12345,
+                    body: 'some text that fixes #123'
+                }]
+            });
         }
     },
     validatorsStub = [
