@@ -29,7 +29,7 @@ function validator(sha, githubUser, repoClient, callback) {
         , description: 'This PR must be linked to an issue.'
         , target_url: 'https://github.com/numenta/nupic/wiki/Development-Process'
       };
-    log.info('Validating that PR fixes an issue');
+    log.info('Validating that the PR for %s fixes an issue', sha);
     // If this PR was created by this server using the ci account, we'll
     // automatically approve it.
     if (githubUser == 'numenta-ci') {

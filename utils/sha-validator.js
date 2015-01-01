@@ -65,36 +65,61 @@ function performCompleteValidation(sha
                                  , postStatus
                                  , cb
                                  ) {
-    var callback = cb, validationFunctions = {};
+    var callback = cb
+      , validationFunctions = {}
+      , searchString = sha + '+state:open'
+      ;
     // default dummy callback for simpler code later
     if (! cb) {
         callback = function() {};
     }
 
-    log.debug('VALIDATING ' + repoClient.toString() + ' at ' + sha);
+    repoClient.searchIssues(searchString, function(err, prs) {
+        var pr;
+        if (err) {
+            return cb(err);
+        }
 
-    _.each(validators, function(validator) {
-        validationFunctions[validator.name] = function(asyncCallback) {
-            log.debug(sha + ': Running commit validator: ' + validator.name);
-            validator.validate(
-                sha
-              , githubUser
-              , repoClient
-              , function(err, validationResult) {
-                    if (postStatus) {
-                        postNewNupicStatus(
-                            validator.name, sha, validationResult, repoClient
-                        );
+        if (prs.total_count ==0) {
+            // No PR for this commit, so no point in validating.
+            log.info('Skipping validation of %s because it has no PR.', sha);
+            return cb();
+        }
+
+        if (prs.total_count > 1) {
+            // What to do?
+            log.warn('Found a SHA linked to more than one PR!');
+            console.log(prs.items);
+        }
+
+        pr = prs.items[0];
+        log.info('Validating %s at %s', pr.html_url, sha);
+
+        _.each(validators, function(validator) {
+            validationFunctions[validator.name] = function(asyncCallback) {
+                log.debug(sha + ': Running commit validator: ' + validator.name);
+                validator.validate(
+                    sha
+                    , githubUser
+                    , repoClient
+                    , function(err, validationResult) {
+                        if (postStatus) {
+                            postNewNupicStatus(
+                                validator.name, sha, validationResult, repoClient
+                            );
+                        }
+                        asyncCallback(err, validationResult);
                     }
-                    asyncCallback(err, validationResult);
-                }
-            );
-        };
+                );
+            };
+        });
+
+        async.parallel(validationFunctions, function(err, results) {
+            callback(null, sha, results, repoClient);
+        });
+
     });
 
-    async.parallel(validationFunctions, function(err, results) {
-        callback(null, sha, results, repoClient);
-    });
 
 }
 

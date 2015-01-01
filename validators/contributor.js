@@ -15,7 +15,7 @@ function isContributor(name, roster) {
 }
 
 function validator(sha, githubUser, repoClient, callback) {
-    log.info('Validating contributor "' + githubUser + '"...');
+    log.info('Validating contributor "%s" for %s...', githubUser, sha);
     // If github user is on the whitelist, we approve.
     if (WHITELIST.indexOf(githubUser) > -1) {
         return callback(null, {
