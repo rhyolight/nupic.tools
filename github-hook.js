@@ -39,7 +39,7 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
             log.debug('A PR just merged. Re-validating open pull requests...');
-            contributors.getAll(repoClient.contributorsUrl, 
+            contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) return cb(err);
                     shaValidator.triggerTravisBuildsOnAllOpenPullRequests(
@@ -198,7 +198,7 @@ function handlePushEvent(payload, monitorConfig) {
 
     if (branch) {
         log.info('GitHub push event on %s:%s', repoSlug, branch);
-        // Only process pushes to master, and only when there is a push hook 
+        // Only process pushes to master, and only when there is a push hook
         // defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookCmd) {
@@ -211,6 +211,22 @@ function handlePushEvent(payload, monitorConfig) {
             executeCommand(hookCmd);
         });
     }
+}
+
+function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
+    repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
+        console.log('last commit:');
+        console.log(commit);
+        callback();
+        shaValidator.performCompleteValidation(
+            commit.sha
+          , commit.author.login
+          , repoClient
+          , dynamicValidatorModules
+          , true
+          , cb
+        );
+    });
 }
 
 /**
@@ -234,6 +250,7 @@ function initializer(clients) {
           , sha = undefined
           , repoName = undefined
           , repoClient = undefined
+          , prNumber = undefined
           ;
 
         if (payload.name) {
@@ -242,10 +259,10 @@ function initializer(clients) {
             repoName = payload.repository.full_name;
         } else if (payload.repository) {
             // Probably a push event.
-            repoName = payload.repository.owner.name 
+            repoName = payload.repository.owner.name
                 + '/' + payload.repository.name;
         } else {
-            log.error('Cannot understand github payload!\n')
+            log.error('Cannot understand github payload!\n');
             log.warn(req.body.payload);
             return res.end();
         }
@@ -297,7 +314,19 @@ function initializer(clients) {
               , whenDone
             );
         }
-        // Assuming everything else is a push event.
+        // A new comment on a PR should trigger re-validation
+        else if (payload.action == 'created'
+                && payload.comment
+                && payload.issue
+                && payload.issue.pull_request) {
+            repoClient = repoClients[payload.repository.full_name];
+            handleNewCommentOnPullRequest(
+                repoClient
+              , payload.issue.number
+              , whenDone
+            );
+        }
+        // Assuming everything else with a ref is a push event.
         else if (payload.ref) {
             handlePushEvent(payload, repoClient);
             whenDone();
