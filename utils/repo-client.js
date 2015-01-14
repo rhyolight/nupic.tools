@@ -132,6 +132,21 @@ RepositoryClient.prototype.compareCommits = function(base, head, callback) {
     }, callback);
 };
 
+RepositoryClient.prototype.getLastCommitOnPullRequest = function(prNumber, callback) {
+    this.github.pullRequests.getCommits({
+        user: this.org
+      , repo: this.repo
+      , number: prNumber
+      , per_page: 100
+    }, function(err, commits) {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, commits[commits.length - 1]);
+        }
+    });
+};
+
 RepositoryClient.prototype.searchIssues = function(query, callback) {
     this.github.search.issues({
         user: this.org
