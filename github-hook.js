@@ -215,8 +215,6 @@ function handlePushEvent(payload, monitorConfig) {
 
 function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        console.log('last commit:');
-        console.log(commit);
         callback();
         shaValidator.performCompleteValidation(
             commit.sha
