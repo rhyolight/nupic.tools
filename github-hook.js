@@ -224,7 +224,7 @@ function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
           , repoClient
           , dynamicValidatorModules
           , true
-          , cb
+          , callback
         );
     });
 }
