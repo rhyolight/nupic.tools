@@ -215,10 +215,17 @@ function handlePushEvent(payload, monitorConfig) {
 
 function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        console.log(commit);
+        var login = undefined;
+        // GitHub sends responses with different schemas sometimes and I don't 
+        // know why!
+        if (commit.commit) {
+            login = commit.commit.author.login || commit.commit.author.name;
+        } else {
+            login = commit.author.login || commit.author.name;
+        }
         shaValidator.performCompleteValidation(
             commit.sha
-          , commit.author.login
+          , login
           , repoClient
           , dynamicValidatorModules
           , true
