@@ -218,7 +218,7 @@ function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
         var login = undefined;
         // GitHub sends responses with different schemas sometimes and I don't 
         // know why!
-        if (commit.commit) {
+        if (! commit.author) {
             login = commit.commit.author.login || commit.commit.author.name;
         } else {
             login = commit.author.login || commit.author.name;
