@@ -1,7 +1,8 @@
+// See https://help.github.com/articles/closing-issues-via-commit-messages/#keywords-for-closing-issues.
 var fixesNumberRegex =
-        /fixes:? #[\d]*/i
+        /(close[s|d]?|fix|fixes|resolve[s|d]?):? #[\d]*/i
   , fixesUrlRegex =
-        /fixes:? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
+        /(close[s|d]?|fix|fixes|resolve[s|d]?):? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
   , log = require('../utils/logger').logger
   , NAME = 'Fixes Issue Validator'
   ;
