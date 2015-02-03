@@ -19,6 +19,7 @@ function RepositoryClient(config) {
     this.password = config.password;
     this.org = config.organization;
     this.repo = config.repository;
+    this.type = config.type;
     this.contributorsUrl = config.contributors;
     this.github = new GitHubApi({
         version: '3.0.0'

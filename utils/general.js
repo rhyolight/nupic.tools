@@ -48,7 +48,6 @@ function initializeModulesWithin(dir) {
 function constructRepoClients(prWebhookUrl, config, callback) {
     var repoClients = {}
       , uncheckedClients = []
-      , globalValidatorConfig = config.validators
       , monitorKeys = _.keys(config.monitors)
       , count = 0
       ;
@@ -64,6 +63,9 @@ function constructRepoClients(prWebhookUrl, config, callback) {
 
         monitorConfig.organization = org;
         monitorConfig.repository = repo;
+        monitorConfig.type = _.find(config.repos, function(r) {
+            return r.slug == org + '/' + repo;
+        }).type || 'unknown';
 
         if (! monitorConfig.validators) {
             monitorConfig.validators = {};

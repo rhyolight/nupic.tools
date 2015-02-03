@@ -35,7 +35,14 @@ function validator(sha, githubUser, repoClient, callback) {
     // automatically approve it.
     if (githubUser == 'numenta-ci') {
         response.state = 'success';
-        response.description = 'This PR was created by nupic.tools.'
+        response.description = 'This PR was created by nupic.tools.';
+        return callback(null, response);
+    }
+    // Only apply this validator to 'primary' repositories.
+    if (repoClient.type != 'primary') {
+        response.state = 'success';
+        response.description = repoClient.type
+                               + ' repos don\'t require issues for PRs.';
         return callback(null, response);
     }
     repoClient.searchIssues(searchString, function(err, prs) {
