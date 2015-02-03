@@ -38,8 +38,8 @@ function validator(sha, githubUser, repoClient, callback) {
         response.description = 'This PR was created by nupic.tools.';
         return callback(null, response);
     }
-    // Only apply this validator to 'primary' repositories.
-    if (repoClient.type != 'primary') {
+    // Only apply this validator to 'primary' & 'port' repositories.
+    if (repoClient.type != 'primary' && repoClient.type != 'port') {
         response.state = 'success';
         response.description = repoClient.type
                                + ' repos don\'t require issues for PRs.';
