@@ -46,6 +46,7 @@ git pull origin master
 echo "Checking out numenta/numenta.org gh-pages branch for documentation push..."
 cd $NUMENTA_ORG
 git fetch upstream
+git checkout gh-pages
 git merge upstream/gh-pages --no-edit
 # move html directories into right place
 rm -rf docs/htm.java
