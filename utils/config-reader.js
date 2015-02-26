@@ -1,5 +1,5 @@
 var fs = require('fs')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , request = require('request')
   , log = require('./logger').logger
   , yaml = require('js-yaml')

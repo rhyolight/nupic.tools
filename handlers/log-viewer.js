@@ -1,7 +1,7 @@
 var fs = require('fs')
   , url = require('url')
   , qs = require('querystring')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , tmpl = require('../utils/template')
   , AnsiConverter = require('ansi-to-html')
   , converter = new AnsiConverter()

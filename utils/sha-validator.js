@@ -1,4 +1,4 @@
-var _ = require('underscore')
+var _ = require('lodash')
   , async = require('async')
   , utils = require('./general')
   , log = require('./logger').logger

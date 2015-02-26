@@ -1,6 +1,6 @@
 var fs = require('fs')
   , path = require('path')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , RepositoryClient = require('./repo-client')
   , NUPIC_STATUS_PREFIX = 'NuPIC Status:'
   , log = require('./logger').logger

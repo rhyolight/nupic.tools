@@ -1,5 +1,5 @@
 var url = require('url')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , json = require('../utils/json')
   , template = require('../utils/template')
   , repoClients = undefined

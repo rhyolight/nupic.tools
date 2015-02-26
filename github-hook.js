@@ -1,6 +1,6 @@
 // This module provides a request handler for HTTP calls from Github web hooks.
 var fs = require('fs')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , log = require('./utils/logger').logger
   , utils = require('./utils/general')
   , contributors = require('./utils/contributors')

@@ -1,6 +1,6 @@
 var GitHubApi = require('github')
   , Travis = require('travis-ci')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , async = require('async')
   , log = require('./logger').logger
   , RepositoryClient

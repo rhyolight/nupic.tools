@@ -1,5 +1,5 @@
 var GitHubApi = require('github')
-  , _ = require('underscore')
+  , _ = require('lodash')
   , async = require('async')
   , json = require('../utils/json')
   , COMMITTER_TEAM_ID = 418155

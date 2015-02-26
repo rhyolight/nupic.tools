@@ -43,10 +43,11 @@
     "memory-cache": "0.0.5",
     "morgan": "1.1.1",
     "q": "1.0.1",
-    "request": "2.36.0",
+    "request": "2.53.0",
     "travis-ci": "1.2.0",
-    "underscore": "1.6.0",
-    "winston": "0.7.3"
+    "lodash": "3.3.1",
+    "winston": "0.7.3",
+    "appveyor-js-client": "0.0.2"
   },
   "devDependencies": {
     "proxyquire": "0.5.x",
