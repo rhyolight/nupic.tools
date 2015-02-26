@@ -57,7 +57,6 @@ describe('when triggering a new travis build', function() {
         };
         this.builds.restart = function(cfg, cb) {
             assert.equal(cfg.id, 25741462, 'Travis given wrong build number.');
-            cb(null, mockRestartResponse);
         };
     };
     mockDependencies = {
@@ -74,12 +73,8 @@ describe('when triggering a new travis build', function() {
     
     describe('for one repository', function() {
         it('calls the travis-ci api properly', function(done) {
-            repoClient.triggerTravisForPullRequest(50, function(err, resp) {
-                console.log(resp);
-                assert.equal(err, undefined, 'Should be no error.');
-                assert(resp, 'Got back bad travis restart response.');
-                done();
-            });
+            repoClient.triggerTravisForPullRequest(50);
+            done();
         });
     });
 });

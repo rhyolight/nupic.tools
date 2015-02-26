@@ -32,28 +32,10 @@ function postNewNupicStatus(statusContext, sha, statusDetails, repoClient) {
 
 function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
     repoClient.getAllOpenPullRequests(function(err, prs) {
-        var count = 0
-          , errors = null
-          ;
         log.debug('Found ' + prs.length + ' open pull requests...');
-        prs.map(function(pr) { return pr.number; }).forEach(function(pr_number) {
-            repoClient.triggerTravisForPullRequest(
-                pr_number
-              , function(err, success) {
-                    count++;
-                    if (err) {
-                        if (! errors) {
-                            errors = [];
-                        }
-                        errors.push(err);
-                    }
-                    if (count == prs.length) {
-                        if (callback) {
-                            callback(errors);
-                        }
-                    }
-                }
-            );
+        prs.map(function(pr) { return pr.number; }).forEach(function(prNumber) {
+            repoClient.triggerTravisForPullRequest(prNumber);
+            repoClient.triggerAppVeyorForPullRequest(prNumber);
         });
     });
 }

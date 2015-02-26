@@ -1,5 +1,6 @@
 var GitHubApi = require('github')
   , Travis = require('travis-ci')
+  , AppVeyor = require('appveyor-js-client')
   , _ = require('lodash')
   , async = require('async')
   , log = require('./logger').logger
@@ -15,12 +16,15 @@ function arraysMatch(left, right) {
  * An interface to the Github repository. Uses the Github API.
  */
 function RepositoryClient(config) {
+    var me = this;
     this.user = config.username;
     this.password = config.password;
     this.org = config.organization;
     this.repo = config.repository;
     this.type = config.type;
     this.contributorsUrl = config.contributors;
+
+    // Set up GitHub API Client.
     this.github = new GitHubApi({
         version: '3.0.0'
       , timeout: 5000
@@ -30,11 +34,32 @@ function RepositoryClient(config) {
       , username: this.user
       , password: this.password
     });
+
+    // Set up Travis-CI API Client.
     this.travis = new Travis({ version: '2.0.0' });
     this.travis.authenticate({
         username: this.user
       , password: this.password
     }, function() {});
+
+    // Set up AppVeyor API Client.
+    // APPVEYOR_API_TOKEN must be in the environment for the 'numenta-ci'
+    // account.
+    this.appveyor = new AppVeyor('numenta-ci');
+    this.appveyor.getProjects(function(err, projects) {
+        if (err) throw err;
+        _.each(projects, function(project) {
+            if (project.repoSlug == me.getRepoSlug()) {
+                me.appveyorProject = project;
+            }
+        });
+        if (! me.appveyorProject) {
+            log.warn('No AppVeyor builds for ' + me);
+        } else {
+            log.info('AppVeyor builds exist for ' + me);
+        }
+    });
+
     // Store configured validators.
     this.validators = config.validators;
     // Store configured hooks.
@@ -171,7 +196,7 @@ RepositoryClient.prototype.rateLimit = function(callback) {
     }, callback);
 };
 
-RepositoryClient.prototype.confirmWebhookExists 
+RepositoryClient.prototype.confirmWebhookExists
 = function(url, events, callback) {
     var me = this
       , slug = this.getRepoSlug()
@@ -251,11 +276,14 @@ RepositoryClient.prototype.confirmWebhookExists
     });
 };
 
-RepositoryClient.prototype.triggerTravisForPullRequest 
-= function(pull_request_number, callback) {
+/**
+ * This is a fire-and-forget function.
+ * @param prNumber
+ */
+RepositoryClient.prototype.triggerTravisForPullRequest = function(prNumber) {
     var travis = this.travis
       , slug = this.getRepoSlug()
-      , prUrl = 'https://github.com/' + slug + '/pull/' + pull_request_number
+      , prUrl = 'https://github.com/' + slug + '/pull/' + prNumber
       ;
     log.debug('Finding builds for %s...', slug);
     travis.builds({
@@ -263,19 +291,24 @@ RepositoryClient.prototype.triggerTravisForPullRequest
       , event_type: 'pull_request'
     }, function(err, response) {
         var pr = _.find(response.builds, function(build) {
-            return build.pull_request_number == pull_request_number;
+            return build.pull_request_number == prNumber;
         });
-        if (! pr) {
-            return callback(
-                new Error('No pull request with #' + pull_request_number)
-            );
+        if (pr) {
+            log.debug('Triggering build for %s', prUrl);
+            travis.builds.restart({ id: pr.id });
         }
-        log.debug('Triggering build for %s', prUrl);
-        travis.builds.restart({ id: pr.id }, function(err, restartResp) {
-            if (err) return callback(err);
-            callback(null, restartResp.result)
-        });
     });
+};
+
+/**
+ * This is a fire-and-forget function.
+ * @param prNumber
+ * @param callback
+ */
+RepositoryClient.prototype.triggerAppVeyorForPullRequest = function(prNumber) {
+    if (this.appveyorProject) {
+        this.appveyorProject.startBuildOfPullRequest(prNumber);
+    }
 };
 
 RepositoryClient.prototype._getRemainingPages 
