@@ -42,7 +42,7 @@ function handlePullRequest(action, pullRequest, repoClient, cb) {
             contributors.getAll(repoClient.contributorsUrl,
                 function(err, contributors) {
                     if (err) return cb(err);
-                    shaValidator.triggerTravisBuildsOnAllOpenPullRequests(
+                    shaValidator.triggerBuildsOnAllOpenPullRequests(
                       repoClient
                     );
                 }

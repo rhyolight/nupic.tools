@@ -30,7 +30,7 @@ function postNewNupicStatus(statusContext, sha, statusDetails, repoClient) {
     repoClient.github.statuses.create(payload);
 }
 
-function triggerTravisBuildsOnAllOpenPullRequests(repoClient, callback) {
+function triggerBuildsOnAllOpenPullRequests(repoClient, callback) {
     repoClient.getAllOpenPullRequests(function(err, prs) {
         log.debug('Found ' + prs.length + ' open pull requests...');
         prs.map(function(pr) { return pr.number; }).forEach(function(prNumber) {
@@ -107,7 +107,6 @@ function performCompleteValidation(sha
 
 module.exports = {
     performCompleteValidation: performCompleteValidation,
-    triggerTravisBuildsOnAllOpenPullRequests: 
-        triggerTravisBuildsOnAllOpenPullRequests,
+    triggerBuildsOnAllOpenPullRequests: triggerBuildsOnAllOpenPullRequests,
     postNewNupicStatus: postNewNupicStatus // for testing
 };
