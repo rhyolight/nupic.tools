@@ -299,7 +299,7 @@ RepositoryClient.prototype.triggerTravisForPullRequest = function(prNumber) {
         });
         if (pr) {
             log.debug('Triggering build for %s', prUrl);
-            travis.builds.restart({ id: pr.id });
+            travis.builds.restart({ id: pr.id }, function() {});
         }
     });
 };
