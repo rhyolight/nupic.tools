@@ -45,20 +45,24 @@ function RepositoryClient(config) {
     // Set up AppVeyor API Client.
     // APPVEYOR_API_TOKEN must be in the environment for the 'numenta-ci'
     // account.
-    this.appveyor = new AppVeyor('numenta-ci');
-    this.appveyor.getProjects(function(err, projects) {
-        if (err) throw err;
-        _.each(projects, function(project) {
-            if (project.repoSlug == me.getRepoSlug()) {
-                me.appveyorProject = project;
+    try {
+        this.appveyor = new AppVeyor('numenta-ci');
+        this.appveyor.getProjects(function(err, projects) {
+            if (err) throw err;
+            _.each(projects, function(project) {
+                if (project.repoSlug == me.getRepoSlug()) {
+                    me.appveyorProject = project;
+                }
+            });
+            if (! me.appveyorProject) {
+                log.warn('No AppVeyor builds for ' + me);
+            } else {
+                log.info('AppVeyor builds exist for ' + me);
             }
         });
-        if (! me.appveyorProject) {
-            log.warn('No AppVeyor builds for ' + me);
-        } else {
-            log.info('AppVeyor builds exist for ' + me);
-        }
-    });
+    } catch(e) {
+        log.warn(e.toString());
+    }
 
     // Store configured validators.
     this.validators = config.validators;
