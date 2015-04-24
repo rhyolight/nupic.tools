@@ -1,0 +1,68 @@
+---
+  # Where this application will be hosted
+  host: "issues.numenta.org"
+  port: 8081
+
+  # Location of the directory where logs will be written.
+  logDirectory: "logs"
+
+  # Default log level.
+  logLevel: "info"
+
+  # Monitored repositories are loaded from this URL. If they have travis enabled,
+  # it is assumed they should have the travis-validator enabled.
+  repos_url: "http://numenta.org/resources/repos.yaml"
+
+  # contributors: URL to CSV file containing a list of people who've
+  #               signed Numenta's contributor license. This is used
+  #               for validating pull requests, ensuring the author
+  #               has signed our license.
+  contributors: "http://numenta.org/resources/contributors.csv"
+
+  # hooks: Paths to local scripts that are executed within a shell
+  #        when the key event occurs.
+  #   - push: Occurs when code is pushed to `master` branch of the
+  #           specified repository.
+  #   - build: Occurs on successfull build of the `master` branch of
+  #           specified repository.
+  hooks:
+    numenta/nupic:
+      push: "bin/post_nupic_push.sh"
+      build: "bin/post_nupic_build.sh"
+      tag: "bin/post_nupic_tag.sh"
+
+    numenta/nupic.core:
+      build: "bin/post_nupic.core_build.sh"
+
+    #numenta/htm.java:
+     # push: "bin/post_htm.java_push.sh"
+
+  # These are the GitHub events the server will subscribe to when setting up
+  # webhooks. Any exiting webhooks for the current server URL will be deleted.
+  #githooks:
+   # - push
+    # - pull_request
+    # - status
+    # - release
+    # - issue_comment
+
+  # Details about each of our mailing lists.
+  mailinglists:
+    - 
+      name: "NuPIC General"
+      rosterUrl: "http://lists.numenta.org/mailman/roster/nupic_lists.numenta.org"
+      archiveUrl: "http://lists.numenta.org/pipermail/nupic_lists.numenta.org/"
+      startmonth: 5
+      startyear: 2013
+    - 
+      name: "NuPIC Hackers"
+      rosterUrl: "http://lists.numenta.org/mailman/roster/nupic-hackers_lists.numenta.org"
+      archiveUrl: "http://lists.numenta.org/pipermail/nupic-hackers_lists.numenta.org/"
+      startmonth: 11
+      startyear: 2013
+    - 
+      name: "NuPIC Theory"
+      rosterUrl: "http://lists.numenta.org/mailman/roster/nupic-theory_lists.numenta.org"
+      archiveUrl: "http://lists.numenta.org/pipermail/nupic-theory_lists.numenta.org/"
+      startmonth: 3
+      startyear: 2014
