@@ -7,6 +7,7 @@ env:
     # Setting these because they are required for tests to pass.
     - export GH_USERNAME=someuser
     - export GH_PASSWORD=somepass
+    - export POSTMARK_API_TOKEN="server_key"
 
 before_script:
 - git branch -v
