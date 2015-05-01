@@ -45,6 +45,10 @@
     - status
     - release
     - issue_comment
+    - gollum
+
+  notifications:
+    gollum: matt@numenta.org
 
   # Details about each of our mailing lists.
   mailinglists:

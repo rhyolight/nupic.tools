@@ -65,7 +65,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         app.use(bodyParser.urlencoded({ extended: true }));
 
         // This puts the Github webhook handler into place
-        app.use(githubHookPath, githubHookHandler.initializer(repoClients));
+        app.use(githubHookPath, githubHookHandler.initializer(repoClients, cfg));
 
         logger.info('The following validators are active:');
         activeValidators = githubHookHandler.getValidators();
