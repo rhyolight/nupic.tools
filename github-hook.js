@@ -175,7 +175,7 @@ function getTagHooksForMonitor(monitorConfig) {
 }
 
 function handleWikiUpdateEvent(payload) {
-    if (appConfig.notifictions && appConfig.notifications.gollum) {
+    if (appConfig.notifications && appConfig.notifications.gollum) {
         var to = appConfig.notifications.gollum
           , subject = 'Wiki updated'
           , body = JSON.stringify(payload, null, 2)
