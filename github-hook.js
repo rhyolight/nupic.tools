@@ -3,6 +3,7 @@ var fs = require('fs')
   , _ = require('lodash')
   , log = require('./utils/logger').logger
   , utils = require('./utils/general')
+  , sendMail = require('./utils/mailman')
   , contributors = require('./utils/contributors')
   , shaValidator = require('./utils/sha-validator')
   , exec = require('child_process').exec
@@ -11,6 +12,7 @@ var fs = require('fs')
     dynamicValidatorModules = []
   , repoClients
   , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
+  , appConfig
   ;
 
 /**
@@ -172,6 +174,22 @@ function getTagHooksForMonitor(monitorConfig) {
     return getHooksForMonitorForType('tag', monitorConfig);
 }
 
+function handleWikiUpdateEvent(payload) {
+    if (appConfig.notifictions && appConfig.notifications.gollum) {
+        var to = appConfig.notifications.gollum
+          , subject = 'Wiki updated'
+          , body = JSON.stringify(payload, null, 2)
+          ;
+        sendMail(to, subject, body, function(error, response) {
+            if (error) {
+                log.error(error);
+            } else {
+                log.info(response);
+            }
+        });
+    }
+}
+
 /**
  * Handles an event from Github that indicates that a PR has been merged into one
  * of the repositories. This could trigger a script to run locally in response,
@@ -242,8 +260,9 @@ function handleNewCommentOnPullRequest(repoClient, prNumber, callback) {
  *                                     being monitored.
  * @param config {object} Application configuration.
  */
-function initializer(clients) {
+function initializer(clients, config) {
     repoClients = clients;
+    appConfig = config;
     dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR);
     /**
      * This is the actual request handler, which is returned after the initializer
@@ -334,6 +353,11 @@ function initializer(clients) {
         // Assuming everything else with a ref is a push event.
         else if (payload.ref) {
             handlePushEvent(payload, repoClient);
+            whenDone();
+        }
+        // Payload with "pages" is a gollum wiki change event.
+        else if (payload.pages) {
+            handleWikiUpdateEvent(payload);
             whenDone();
         } else {
             log.error('** Unknown GitHub Webhook Payload! **'.red);
