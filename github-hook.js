@@ -177,9 +177,14 @@ function getTagHooksForMonitor(monitorConfig) {
 function handleWikiUpdateEvent(payload) {
     if (appConfig.notifications && appConfig.notifications.gollum) {
         var to = appConfig.notifications.gollum
-          , subject = 'Wiki updated'
-          , body = JSON.stringify(payload, null, 2)
+          , repo = payload.repository.full_name
+          , editor = payload.sender.login
+          , subject = '[wiki-change] ' + repo + ' updated by ' + editor
+          , body = ''
           ;
+        _.each(payload.pages, function(page) {
+            body += page.title + ' was ' + page.action + ': ' + page.html_url + '\n\n';
+        });
         sendMail(to, subject, body, function(error, response) {
             if (error) {
                 log.error(error);
