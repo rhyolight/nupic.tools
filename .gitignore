@@ -6,3 +6,6 @@ node_modules
 coverage
 .ackrc
 npm-debug.log
+*.swp
+.Rhistory
+
