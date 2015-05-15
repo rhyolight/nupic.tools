@@ -130,14 +130,7 @@ function pullRequestHandler(payload, callback) {
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
             log.debug('A PR just merged. Re-validating open pull requests...');
-            contributors.getAll(repoClient.contributorsUrl,
-                function(err, contributors) {
-                    if (err) return callback(err);
-                    shaValidator.triggerBuildsOnAllOpenPullRequests(
-                        repoClient
-                    );
-                }
-            );
+            shaValidator.triggerBuildsOnAllOpenPullRequests(repoClient);
         } else {
             if (callback) callback();
         }
