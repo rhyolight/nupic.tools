@@ -71,7 +71,7 @@ describe('github hook handler', function() {
             },
             mockRequest = {
                 headers: {
-                    'X-Github-Event': 'pull_request'
+                    'x-github-event': 'pull_request'
                 },
                 body: {
                     payload: JSON.stringify(mockPayload)
@@ -111,7 +111,7 @@ describe('github hook handler', function() {
         var mockPayload = require('./github_payloads/status_master_build_success'),
             mockRequest = {
                 headers: {
-                    'X-Github-Event': 'status'
+                    'x-github-event': 'status'
                 },
                 body: {
                     payload: JSON.stringify(mockPayload)
@@ -138,7 +138,7 @@ describe('github hook handler', function() {
         var mockPayload = require('./github_payloads/status_non-master_build_success'),
             mockRequest = {
                 headers: {
-                    'X-Github-Event': 'status'
+                    'x-github-event': 'status'
                 },
                 body: {
                     payload: JSON.stringify(mockPayload)
@@ -169,7 +169,7 @@ describe('github hook handler', function() {
         var mockPayload = require('./github_payloads/status_master_build_success'),
             mockRequest = {
                 headers: {
-                    'X-Github-Event': 'status'
+                    'x-github-event': 'status'
                 },
                 body: {
                     payload: JSON.stringify(mockPayload)
@@ -204,7 +204,7 @@ describe('github hook handler', function() {
         var mockPayload = require('./github_payloads/experiments_tag'),
             mockRequest = {
                 headers: {
-                    'X-Github-Event': 'push'
+                    'x-github-event': 'push'
                 },
                 body: {
                     payload: JSON.stringify(mockPayload)
