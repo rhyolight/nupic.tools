@@ -1,29 +1,20 @@
 var assert = require('assert'),
-    proxyquire = require('proxyquire'),
-    utilStub = {
-        initializeModulesWithin: function() {
-            return 'validators to be used';
-        },
-        lastStatusWasExternal: function(repoClient, sha, cb) {
-            cb(true);
-        }
-    };
+    proxyquire = require('proxyquire')
+;
 
 
 describe('github hook handler', function() {
     var validationPerformed = false,
         executedHookCommands = [],
         validatedSHA, validatedUser, validatorsUsed, validationPosted,
-        githubHook = proxyquire('./../github-hook', {
-            'child_process': {
-                exec: function(cmd, cb) {
-                    executedHookCommands.push(cmd);
-                    cb(null, 'stdout', 'stderr');
+        githubHookHandlers = proxyquire('./../utils/github-hook-handlers', {
+            './general': {
+                lastStatusWasExternal: function (repoClient, sha, cb) {
+                    cb(true);
                 }
             },
-            './utils/general': utilStub,
-            './utils/sha-validator': {
-                performCompleteValidation: function(sha, githubUser, _, validators, postStatus, cb) {
+            './sha-validator': {
+                performCompleteValidation: function (sha, githubUser, _, validators, postStatus, cb) {
                     validationPerformed = true;
                     validatedSHA = sha;
                     validatedUser = githubUser;
@@ -31,8 +22,22 @@ describe('github hook handler', function() {
                     validationPosted = postStatus;
                     cb();
                 }
+            },
+            'child_process': {
+                exec: function(cmd, cb) {
+                    executedHookCommands.push(cmd);
+                    cb(null, 'stdout', 'stderr');
+                }
             }
-        }),
+        });
+        githubHook = proxyquire('./../github-hook', {
+            './utils/github-hook-handlers': githubHookHandlers,
+            './utils/general': {
+                initializeModulesWithin: function() {
+                    return 'validators to be used';
+                }
+            }
+        });
         mockClients = {'numenta/experiments': {
             hooks: {
                 build: 'build hook'
@@ -45,12 +50,11 @@ describe('github hook handler', function() {
                     }
                 }
             }
-        }},
+        }};
         handler = githubHook.initializer(mockClients, 'mockConfig');
 
     it('calls pr handler when sent a mergeable pull_request event', function() {
         var mockPayload = {
-                name: 'numenta/experiments',
                 pull_request: {
                     action: 'closed',
                     user: {login: 'login'},
@@ -60,9 +64,15 @@ describe('github hook handler', function() {
                     merged: false,
                     mergeable: true,
                     mergeable_state: "clean"
+                },
+                repository: {
+                    full_name: 'numenta/experiments'
                 }
             },
             mockRequest = {
+                headers: {
+                    'X-Github-Event': 'pull_request'
+                },
                 body: {
                     payload: JSON.stringify(mockPayload)
                 }
@@ -83,7 +93,7 @@ describe('github hook handler', function() {
         assert.equal(validatedUser, 'login', 'validated wrong user');
         assert.equal(validatorsUsed, 'validators to be used', 'used wrong validators');
         assert(validationPosted, 'validation status was not posted');
-        assert(endCalled, 'request was not closed');
+        assert(endCalled, 'response was not closed');
 
         // Reset just in case further tests use them.
         validationPerformed = undefined;
@@ -100,6 +110,9 @@ describe('github hook handler', function() {
     it('calls one build hook command on master build success status event', function() {
         var mockPayload = require('./github_payloads/status_master_build_success'),
             mockRequest = {
+                headers: {
+                    'X-Github-Event': 'status'
+                },
                 body: {
                     payload: JSON.stringify(mockPayload)
                 }
@@ -124,6 +137,9 @@ describe('github hook handler', function() {
     it('does NOT call build hook commands on non-master build success status event', function() {
         var mockPayload = require('./github_payloads/status_non-master_build_success'),
             mockRequest = {
+                headers: {
+                    'X-Github-Event': 'status'
+                },
                 body: {
                     payload: JSON.stringify(mockPayload)
                 }
@@ -152,6 +168,9 @@ describe('github hook handler', function() {
         handler = githubHook.initializer(mockClients, 'mockConfig');
         var mockPayload = require('./github_payloads/status_master_build_success'),
             mockRequest = {
+                headers: {
+                    'X-Github-Event': 'status'
+                },
                 body: {
                     payload: JSON.stringify(mockPayload)
                 }
@@ -184,6 +203,9 @@ describe('github hook handler', function() {
 
         var mockPayload = require('./github_payloads/experiments_tag'),
             mockRequest = {
+                headers: {
+                    'X-Github-Event': 'push'
+                },
                 body: {
                     payload: JSON.stringify(mockPayload)
                 }

@@ -40,12 +40,11 @@
   # These are the GitHub events the server will subscribe to when setting up
   # webhooks. Any exiting webhooks for the current server URL will be deleted.
   githooks:
-    - push
-    - pull_request
-    - status
-    - release
-    - issue_comment
     - gollum
+    - issue_comment
+    - pull_request
+    - push
+    - status
 
   notifications:
     gollum: matt@numenta.org
