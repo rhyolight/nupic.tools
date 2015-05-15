@@ -107,8 +107,6 @@ function issueCommentHandler(payload, callback) {
     });
 }
 
-function issuesHandler(payload, callback) {}
-
 /* Handles pull_request events from GitHub. */
 function pullRequestHandler(payload, callback) {
     var action = payload.action
@@ -211,7 +209,6 @@ function statusHandler(payload, callback) {
       , context = payload.context
       , repoSlug = payload.repository.full_name
       , repoClient = repoClients[repoSlug]
-      , cb = callback
       , isMaster = undefined
       , buildHooks = undefined
       ;
@@ -238,7 +235,7 @@ function statusHandler(payload, callback) {
         repoClient.getCommit(sha, function(err, commit) {
             if (! commit.author) {
                 log.error('No commit author exists in the payload!', commit);
-                return cb(
+                return callback(
                     new Error('No commit author specified for sha: ' + sha)
                 );
             }
@@ -248,11 +245,12 @@ function statusHandler(payload, callback) {
               , repoClient
               , validators
               , true
-              , cb
+              , callback
             );
         });
     } else {
         log.info('Ignoring state change.');
+        callback();
     }
 }
 
@@ -263,7 +261,6 @@ module.exports = function(repositoryClients, dynamicValidators, appConfig) {
     return {
         gollum: gollumHandler
       , issue_comment: issueCommentHandler
-      , issues: issuesHandler
       , pull_request: pullRequestHandler
       , push: pushHandler
       , status: statusHandler

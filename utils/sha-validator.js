@@ -59,13 +59,13 @@ function performCompleteValidation(sha
     repoClient.searchIssues(searchString, function(err, prs) {
         var pr;
         if (err) {
-            return cb(err);
+            return callback(err);
         }
 
         if (prs.total_count ==0) {
             // No PR for this commit, so no point in validating.
             log.info('Skipping validation of %s because it has no PR.', sha);
-            return cb();
+            return callback();
         }
 
         if (prs.total_count > 1) {
