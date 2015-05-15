@@ -83,6 +83,12 @@ function issueCommentHandler(payload, callback) {
       , repoSlug = payload.repository.full_name
       , repoClient = repoClients[repoSlug]
       ;
+
+    // Ignore comments on issues, we only want to take action on pull requests.
+    if (! payload.issue.pull_request) {
+        return callback();
+    }
+
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
         var login = undefined;
         if (! commit.author) {

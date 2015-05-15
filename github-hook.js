@@ -12,7 +12,7 @@ var fs = require('fs')
 
 var githubHookHandlerInitializer = require('./utils/github-hook-handlers')
   , githubHookHandlers = undefined
-  , EVENT_HEADER_NAME = 'X-Github-Event'
+  , EVENT_HEADER_NAME = 'x-github-event'
   ;
 
 /**
@@ -34,10 +34,11 @@ function initializer(clients, config) {
     return function(req, res) {
         var event
           , handler
+          , headers = req.headers
           , payload
           ;
 
-        event = req.headers[EVENT_HEADER_NAME];
+        event = headers[EVENT_HEADER_NAME];
         if (! event) {
             throw new Error('Cannot process GitHub web hook event that does ' +
                 'not contain the ' + EVENT_HEADER_NAME + ' header to ' +
