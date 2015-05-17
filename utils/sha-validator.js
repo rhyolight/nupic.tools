@@ -84,10 +84,10 @@ function performCompleteValidation(sha
                 log.debug(sha + ': Running commit validator: ' + validator.name);
                 validator.validate(
                     sha
-                    , githubUser
-                    , repoClient
-                    , function(err, validationResult) {
-                        if (postStatus) {
+                  , githubUser
+                  , repoClient
+                  , function(err, validationResult) {
+                        if (!err && postStatus) {
                             postNewNupicStatus(
                                 validator.name, sha, validationResult, repoClient
                             );
