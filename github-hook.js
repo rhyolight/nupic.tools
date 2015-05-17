@@ -59,7 +59,11 @@ function initializer(clients, config) {
         handler(payload, function(error) {
             if (error) {
                 log.error('Error encountered when processing GitHub web hook event "' + event + '":');
-                log.error(error);
+                log.error(error.toString());
+                log.error('HEADERS:');
+                log.info(headers);
+                log.error('PAYLOAD:');
+                log.info(payload);
             } else {
                 log.info('Completed GitHub web hook handling for "' + event
                     + '" event.');
