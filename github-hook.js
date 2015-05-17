@@ -55,6 +55,7 @@ function initializer(clients, config) {
 
         payload = JSON.parse(req.body.payload);
 
+        log.info('Processing Github web hook "' + event + '"...');
         handler(payload, function(error) {
             if (error) {
                 log.error('Error encountered when processing GitHub web hook event "' + event + '":');
