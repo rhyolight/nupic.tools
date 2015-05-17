@@ -80,19 +80,23 @@ function validateSha(req, res) {
                                                validators, postStatus,
             function (err, sha, validationResponses, repoClient) {
                 var htmlOut = '<html><body>\n<h1>SHA Validation report</h1>\n';
-                htmlOut += '<h2>' + repoClient.toString() + '</h2>\n';
-                htmlOut += '<h2>' + sha + '</h2>\n';
-                _.each(validationResponses, 
-                    function (statusDetails, validatorName) {
-                        htmlOut += '<h3>' + validatorName + ': ' 
-                            + statusDetails.state + '</h3>\n';
-                        htmlOut += '<p>' + statusDetails.description + '</p>\n';
-                        if (statusDetails.target_url) {
-                            htmlOut += '<p><a href="' + statusDetails.target_url 
-                                + '">Details</a></p>\n';
+                if (err) {
+                    htmlOut += '<h2>' + err.message + '</h2>\n';
+                } else {
+                    htmlOut += '<h2>' + repoClient.toString() + '</h2>\n';
+                    htmlOut += '<h2>' + sha + '</h2>\n';
+                    _.each(validationResponses,
+                        function (statusDetails, validatorName) {
+                            htmlOut += '<h3>' + validatorName + ': '
+                                + statusDetails.state + '</h3>\n';
+                            htmlOut += '<p>' + statusDetails.description + '</p>\n';
+                            if (statusDetails.target_url) {
+                                htmlOut += '<p><a href="' + statusDetails.target_url
+                                    + '">Details</a></p>\n';
+                            }
                         }
-                    }
-                );
+                    );
+                }
                 htmlOut += '\n</body></html>';
                 res.setHeader('Content-Type', 'text/html');
                 res.setHeader('Content-Length', htmlOut.length);

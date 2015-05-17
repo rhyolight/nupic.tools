@@ -64,8 +64,10 @@ function performCompleteValidation(sha
 
         if (prs.total_count ==0) {
             // No PR for this commit, so no point in validating.
-            log.info('Skipping validation of %s because it has no PR.', sha);
-            return callback();
+            err = new Error('Skipping validation of ' + sha
+                + ' because it has no PR.');
+            log.warn(err);
+            return callback(err);
         }
 
         if (prs.total_count > 1) {
