@@ -58,12 +58,6 @@ function validator(sha, githubUser, repoClient, callback) {
             return callback(null, response);
         }
 
-        if (prs.total_count > 1) {
-            // What to do?
-            log.warn('Found a SHA linked to more than one PR!');
-            console.log(prs.items);
-        }
-
         // Passes if any PR is linked.
         _.each(prs.items, function(pr) {
             if (hasFixLinkToIssue(pr.number, pr.body)) {
