@@ -1,5 +1,6 @@
-// See https://help.github.com/articles/closing-issues-via-commit-messages/#keywords-for-closing-issues.
-var fixesNumberRegex =
+var _ = require('lodash')
+    // See https://help.github.com/articles/closing-issues-via-commit-messages/#keywords-for-closing-issues.
+  , fixesNumberRegex =
         /(close[s|d]?|fix|fixes|resolve[s|d]?):? #[\d]*/i
   , fixesUrlRegex =
         /(close[s|d]?|fix|fixes|resolve[s|d]?):? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
