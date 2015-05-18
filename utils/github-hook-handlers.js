@@ -119,8 +119,7 @@ function pullRequestHandler(payload, callback) {
       ;
 
     log.info(
-        'Received pull request "%s" on %s from %s',
-        action, repoClient.toString(), githubUser
+        'Pull Request %s was %s by %s', pullRequest.html_url, action, githubUser
     );
 
     if (action == 'closed') {
@@ -133,6 +132,9 @@ function pullRequestHandler(payload, callback) {
         } else {
             callback();
         }
+    } else if (action == 'labeled') {
+        // Ignore labels for now.
+        callback();
     } else {
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
             if (external) {
@@ -152,7 +154,6 @@ function pullRequestHandler(payload, callback) {
                 callback();
             }
         });
-
     }
 }
 
