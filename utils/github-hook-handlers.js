@@ -128,9 +128,10 @@ function pullRequestHandler(payload, callback) {
         // Travis-CI jobs of all the other open pull requests.
         if (pullRequest.merged) {
             log.debug('A PR just merged. Re-validating open pull requests...');
-            shaValidator.triggerBuildsOnAllOpenPullRequests(repoClient);
+            shaValidator.triggerBuildsOnAllOpenPullRequests(repoClient
+                                                          , callback);
         } else {
-            if (callback) callback();
+            callback();
         }
     } else {
         utils.lastStatusWasExternal(repoClient, sha, function(external) {
@@ -148,7 +149,7 @@ function pullRequestHandler(payload, callback) {
                 log.debug(
                     'Ignoring status created by nupic.tools for %s...', sha
                 );
-                if (callback) { callback(); }
+                callback();
             }
         });
 
