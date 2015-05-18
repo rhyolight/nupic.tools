@@ -55,7 +55,6 @@ function performCompleteValidation(sha
                                  , cb
                                  ) {
     var callback = cb
-      , validationFunctions = {}
       , searchString = sha + '+state:open'
       ;
     // default dummy callback for simpler code later
@@ -64,12 +63,12 @@ function performCompleteValidation(sha
     }
 
     repoClient.searchIssues(searchString, function(err, prs) {
-        var pr;
+        var validationFunctions = {};
         if (err) {
             return callback(err);
         }
 
-        if (prs.total_count ==0) {
+        if (prs.total_count == 0) {
             // No PR for this commit, so no point in validating.
             err = new Error('Skipping validation of ' + sha
                 + ' because it has no PR.');
@@ -77,32 +76,32 @@ function performCompleteValidation(sha
             return callback(err);
         }
 
-        if (prs.total_count > 1) {
-            // What to do?
-            log.warn('Found a SHA linked to more than one PR!');
-            console.log(prs.items);
-        }
-
-        pr = prs.items[0];
-        log.info('Validating %s at %s', pr.html_url, sha);
-
-        _.each(validators, function(validator) {
-            validationFunctions[validator.name] = function(asyncCallback) {
-                log.debug(sha + ': Running commit validator: ' + validator.name);
-                validator.validate(
-                    sha
-                  , githubUser
-                  , repoClient
-                  , function(err, validationResult) {
-                        if (!err && postStatus) {
-                            postNewNupicStatus(
-                                validator.name, sha, validationResult, repoClient
-                            );
-                        }
-                        asyncCallback(err, validationResult);
-                    }
-                );
-            };
+        // There may be more than one PR associated with a commit SHA if someone
+        // created one PR based on the changes presented in another PR. In this
+        // case we will validate them all.
+        _.each(prs.items, function(pr) {
+            log.info('Validating %s at %s', pr.html_url, sha);
+            _.each(validators, function(validator) {
+                validationFunctions[pr.number + '-' + validator.name] =
+                    function(asyncCallback) {
+                        log.debug(sha + ': Running commit validator: '
+                            + validator.name);
+                        validator.validate(
+                            sha
+                            , githubUser
+                            , repoClient
+                            , function(err, validationResult) {
+                                if (!err && postStatus) {
+                                    postNewNupicStatus(
+                                        validator.name, sha,
+                                        validationResult, repoClient
+                                    );
+                                }
+                                asyncCallback(err, validationResult);
+                            }
+                        );
+                    };
+            });
         });
 
         async.parallel(validationFunctions, function(err, results) {

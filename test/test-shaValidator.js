@@ -7,6 +7,7 @@ var assert = require('chai').assert,
         },
         searchIssues: function(query, callback) {
             callback(null, {
+                total_count: 1,
                 items: [{
                     number: 12345,
                     body: 'some text that fixes #123'
@@ -49,15 +50,15 @@ describe('shaValidator test', function() {
             expect(err).to.not.exist;
             expect(sha).to.equal('testSHA');
             expect(output).to.be.instanceOf(Object);
-            expect(output).to.have.keys('FirstValidator', 'SecondValidator');
-            expect(output['FirstValidator']).to.have.keys(['state', 'description', 'target_url']);
-            expect(output['SecondValidator']).to.have.keys(['state', 'description', 'target_url']);
-            expect(output['FirstValidator'].state).to.equal('success');
-            expect(output['SecondValidator'].state).to.equal('success');
-            expect(output['FirstValidator'].description).to.equal('firstDescription');
-            expect(output['SecondValidator'].description).to.equal('secondDescription');
-            expect(output['FirstValidator'].target_url).to.equal('firstTargetUrl');
-            expect(output['SecondValidator'].target_url).to.equal('secondTargetUrl');
+            expect(output).to.have.keys('12345-FirstValidator', '12345-SecondValidator');
+            expect(output['12345-FirstValidator']).to.have.keys(['state', 'description', 'target_url']);
+            expect(output['12345-SecondValidator']).to.have.keys(['state', 'description', 'target_url']);
+            expect(output['12345-FirstValidator'].state).to.equal('success');
+            expect(output['12345-SecondValidator'].state).to.equal('success');
+            expect(output['12345-FirstValidator'].description).to.equal('firstDescription');
+            expect(output['12345-SecondValidator'].description).to.equal('secondDescription');
+            expect(output['12345-FirstValidator'].target_url).to.equal('firstTargetUrl');
+            expect(output['12345-SecondValidator'].target_url).to.equal('secondTargetUrl');
             done();
         });
     });
