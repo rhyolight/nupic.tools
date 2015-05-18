@@ -46,7 +46,7 @@ function validator(sha, githubUser, repoClient, callback) {
         return callback(null, response);
     }
     repoClient.searchIssues(searchString, function(err, prs) {
-        var pr, fixMatch;
+        var fixMatch;
         if (err) {
             return callback(err);
         }
@@ -63,8 +63,13 @@ function validator(sha, githubUser, repoClient, callback) {
             console.log(prs.items);
         }
 
-        pr = prs.items[0];
-        fixMatch = hasFixLinkToIssue(pr.number, pr.body);
+        // Passes if any PR is linked.
+        _.each(prs.items, function(pr) {
+            if (hasFixLinkToIssue(pr.number, pr.body)) {
+                fixMatch = true;
+            }
+        });
+
         if (fixMatch) {
             response.state = 'success';
             response.description = 'PR is properly linked to an issue';
