@@ -1,19 +1,42 @@
-var assert = require('assert'),
-    proxyquire = require('proxyquire')
-;
+var assert = require('assert')
+  , proxyquire = require('proxyquire')
+  , logCache = {
+        debug: []
+      , info: []
+      , warn: []
+      , error: []
+    }
+  ;
 
+function clearLogCache() {
+    logCache = {
+        debug: []
+      , info: []
+      , warn: []
+      , error: []
+    };
+}
 
 describe('github hook handler', function() {
-    var validationPerformed = false,
-        executedHookCommands = [],
-        validatedSHA, validatedUser, validatorsUsed, validationPosted,
-        githubHookHandlers = proxyquire('./../utils/github-hook-handlers', {
+    var validationPerformed = false
+      , executedHookCommands = []
+      , logs = {
+            debug: []
+          , info: []
+          , warn: []
+          , error: []
+        }
+      , validatedSHA
+      , validatedUser
+      , validatorsUsed
+      , validationPosted
+      , githubHookHandlers = proxyquire('./../utils/github-hook-handlers', {
             './general': {
                 lastStatusWasExternal: function (repoClient, sha, cb) {
                     cb(true);
                 }
-            },
-            './sha-validator': {
+            }
+          , './sha-validator': {
                 performCompleteValidation: function (sha, githubUser, _, validators, postStatus, cb) {
                     validationPerformed = true;
                     validatedSHA = sha;
@@ -22,8 +45,8 @@ describe('github hook handler', function() {
                     validationPosted = postStatus;
                     cb();
                 }
-            },
-            'child_process': {
+            }
+          , 'child_process': {
                 exec: function(cmd, cb) {
                     executedHookCommands.push(cmd);
                     cb(null, 'stdout', 'stderr');
@@ -35,6 +58,22 @@ describe('github hook handler', function() {
             './utils/general': {
                 initializeModulesWithin: function() {
                     return 'validators to be used';
+                }
+            },
+            './utils/logger': {
+                logger: {
+                    debug: function(msg) {
+                        logCache.debug.push(msg);
+                    }
+                  , info: function(msg) {
+                        logCache.info.push(msg);
+                    }
+                  , warn: function(msg) {
+                        logCache.warn.push(msg);
+                    }
+                  , error: function(msg) {
+                        logCache.error.push(msg);
+                    }
                 }
             }
         });
@@ -52,6 +91,68 @@ describe('github hook handler', function() {
             }
         }};
         handler = githubHook.initializer(mockClients, 'mockConfig');
+
+    clearLogCache();
+
+    it('logs a warning and closes response when unrecognized repository', function() {
+        var mockPayload = {
+                repository: {
+                    full_name: 'does-not-exist'
+                }
+            },
+            mockRequest = {
+                headers: {
+                    'x-github-event': 'push'
+                },
+                body: {
+                    payload: JSON.stringify(mockPayload)
+                }
+            },
+            endCalled = false,
+            mockResponse = {
+                end: function() {
+                    endCalled = true;
+                }
+            };
+
+        clearLogCache();
+
+        handler(mockRequest, mockResponse);
+        assert(logCache.warn[0]);
+        assert.equal(1, logCache.warn.length);
+        assert.equal(logCache.warn[0], 'Ignoring GitHub hook event "push" because does-not-exist is not being monitored.');
+        assert(endCalled, 'response was not closed');
+    });
+
+    it('logs a warning and closes response when unrecognized event', function() {
+        var mockPayload = {
+                repository: {
+                    full_name: 'numenta/experiments'
+                }
+            },
+            mockRequest = {
+                headers: {
+                    'x-github-event': 'unknown-event'
+                },
+                body: {
+                    payload: JSON.stringify(mockPayload)
+                }
+            },
+            endCalled = false,
+            mockResponse = {
+                end: function() {
+                    endCalled = true;
+                }
+            };
+
+        clearLogCache();
+
+        handler(mockRequest, mockResponse);
+        assert(logCache.warn[0]);
+        assert.equal(1, logCache.warn.length);
+        assert.equal(logCache.warn[0], 'Ignoring GitHub hook event "unknown-event" on numenta/experiments because there is no event handler for this event type.');
+        assert(endCalled, 'response was not closed');
+    });
 
     it('calls pr handler when sent a mergeable pull_request event', function() {
         var mockPayload = {

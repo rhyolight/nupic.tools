@@ -36,6 +36,7 @@ function initializer(clients, config) {
           , handler
           , headers = req.headers
           , payload
+          , repoSlug
           ;
 
         event = headers[EVENT_HEADER_NAME];
@@ -45,15 +46,24 @@ function initializer(clients, config) {
                 'identify the event type!');
         }
 
+        payload = JSON.parse(req.body.payload);
         handler = githubHookHandlers[event];
+        repoSlug = payload.repository.full_name;
 
         // If no event handler exists for the hook, just warn and ignore it.
         if (! handler) {
-            log.warn('Ignoring GitHub hook event "' + event + '".');
+            log.warn('Ignoring GitHub hook event "' + event
+                + '" on ' + repoSlug + ' because there is no event handler ' +
+                'for this event type.');
             return res.end();
         }
 
-        payload = JSON.parse(req.body.payload);
+        // If no event client exists for the hook, just warn and ignore it.
+        if (! clients[repoSlug]) {
+            log.warn('Ignoring GitHub hook event "' + event
+                + '" because ' + repoSlug + ' is not being monitored.');
+            return res.end();
+        }
 
         log.info('Processing Github web hook "' + event + '"...');
         handler(payload, function(error) {
