@@ -2,7 +2,9 @@ var exec = require('child_process').exec
   , _ = require('lodash')
   , log = require('./logger').logger
   , utils = require('./general')
-  , sendMail = require('./mailman')
+  , gollumHandler = require('./hook-handlers/gollum')
+  , issueCommentHandler = require('./hook-handlers/issue_comment')
+  , pullRequestHandler= require('./hook-handlers/pull_request')
   , shaValidator = require('./sha-validator')
   , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
     // All the validator modules
@@ -25,9 +27,9 @@ function executeCommand(command) {
     log.warn('Executing hook command "%s"', command);
     exec(command, function (error, stdout, stderr) {
         log.debug(stdout);
-        if (stderr) { log.warn(stderr); }
-        if (error !== null) {
-            log.error('command execution error: %s', error);
+        if (stderr) { log.warn('STDERR: %s', stderr); }
+        if (error) {
+            log.error('Command execution error: %s', error);
         }
     });
 }
@@ -62,100 +64,7 @@ function getTagHooksForMonitor(repoClient) {
 /******************************************************************************/
 
 
-function gollumHandler(payload, callback) {
-    var notificationSettings = config.notifications;
-    if (notificationSettings && notificationSettings.gollum) {
-        var to = notificationSettings.gollum
-          , repo = payload.repository.full_name
-          , editor = payload.sender.login
-          , subject = '[wiki-change] ' + repo + ' updated by ' + editor
-          , body = ''
-          ;
-        _.each(payload.pages, function(page) {
-            body += page.title + ' was ' + page.action + ': ' + page.html_url + '\n\n';
-        });
-        sendMail(to, subject, body, callback);
-    }
-}
 
-function issueCommentHandler(payload, callback) {
-    var prNumber = payload.issue.number
-      , repoSlug = payload.repository.full_name
-      , repoClient = repoClients[repoSlug]
-      ;
-
-    // Ignore comments on issues, we only want to take action on pull requests.
-    if (! payload.issue.pull_request) {
-        return callback();
-    }
-
-    repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        var login = undefined;
-        if (! commit.author) {
-            login = commit.commit.author.login || commit.commit.author.name;
-        } else {
-            login = commit.author.login || commit.author.name;
-        }
-        shaValidator.performCompleteValidation(
-            commit.sha
-          , login
-          , repoClient
-          , validators
-          , true
-          , callback
-        );
-    });
-}
-
-/* Handles pull_request events from GitHub. */
-function pullRequestHandler(payload, callback) {
-    var action = payload.action
-      , pullRequest = payload.pull_request
-      , repoSlug = payload.repository.full_name
-      , repoClient = repoClients[repoSlug]
-      , githubUser = pullRequest.user.login
-      , head = pullRequest.head
-      , sha = head.sha
-      ;
-
-    log.info(
-        'Pull Request %s was %s by %s', pullRequest.html_url, action, githubUser
-    );
-
-    if (action == 'closed') {
-        // If this pull request just got merged, we need to re-trigger the
-        // Travis-CI jobs of all the other open pull requests.
-        if (pullRequest.merged) {
-            log.debug('A PR just merged. Re-validating open pull requests...');
-            shaValidator.triggerBuildsOnAllOpenPullRequests(repoClient
-                                                          , callback);
-        } else {
-            callback();
-        }
-    } else if (action == 'labeled') {
-        // Ignore labels for now.
-        callback();
-    } else {
-        utils.lastStatusWasExternal(repoClient, sha, function(external) {
-            if (external) {
-                shaValidator.performCompleteValidation(
-                    sha
-                    , githubUser
-                    , repoClient
-                    , validators
-                    , true
-                    , callback
-                );
-            } else {
-                // ignore statuses that were created by this server
-                log.debug(
-                    'Ignoring status created by nupic.tools for %s...', sha
-                );
-                callback();
-            }
-        });
-    }
-}
 
 /*
  * Handles an event from Github that indicates that a PR has been merged into one

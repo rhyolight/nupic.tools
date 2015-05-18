@@ -7,7 +7,6 @@ var fs = require('fs')
   , VALIDATOR_DIR = 'validators'
   , // All the validator modules
     dynamicValidatorModules = []
-  , repoClients
   ;
 
 var githubHookHandlerInitializer = require('./utils/github-hook-handlers')
@@ -79,7 +78,7 @@ function initializer(clients, config) {
                     + '" event.');
             }
             res.end();
-        });
+        }, config, clients[repoSlug], dynamicValidatorModules);
     };
 
 }

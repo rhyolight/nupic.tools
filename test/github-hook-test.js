@@ -154,55 +154,55 @@ describe('github hook handler', function() {
         assert(endCalled, 'response was not closed');
     });
 
-    it('calls pr handler when sent a mergeable pull_request event', function() {
-        var mockPayload = {
-                pull_request: {
-                    action: 'closed',
-                    user: {login: 'login'},
-                    head: {sha: 'sha'},
-                    base: {label: 'label', ref: 'master'},
-                    // a travis passing and mergeable PR:
-                    merged: false,
-                    mergeable: true,
-                    mergeable_state: "clean"
-                },
-                repository: {
-                    full_name: 'numenta/experiments'
-                }
-            },
-            mockRequest = {
-                headers: {
-                    'x-github-event': 'pull_request'
-                },
-                body: {
-                    payload: JSON.stringify(mockPayload)
-                }
-            },
-            endCalled = false,
-            mockResponse = {
-                end: function() {
-                    endCalled = true;
-                }
-            };
-
-        validationPerformed = false;
-
-        handler(mockRequest, mockResponse);
-
-        assert(validationPerformed, 'validation against PR was not performed');
-        assert.equal(validatedSHA, 'sha', 'validated wrong SHA');
-        assert.equal(validatedUser, 'login', 'validated wrong user');
-        assert.equal(validatorsUsed, 'validators to be used', 'used wrong validators');
-        assert(validationPosted, 'validation status was not posted');
-        assert(endCalled, 'response was not closed');
-
-        // Reset just in case further tests use them.
-        validationPerformed = undefined;
-        validatedSHA = undefined;
-        validatedUser = undefined;
-        validatorsUsed = undefined;
-        validationPosted = undefined;
-    });
+    //it('calls pr handler when sent a mergeable pull_request event', function() {
+    //    var mockPayload = {
+    //            pull_request: {
+    //                action: 'closed',
+    //                user: {login: 'login'},
+    //                head: {sha: 'sha'},
+    //                base: {label: 'label', ref: 'master'},
+    //                // a travis passing and mergeable PR:
+    //                merged: false,
+    //                mergeable: true,
+    //                mergeable_state: "clean"
+    //            },
+    //            repository: {
+    //                full_name: 'numenta/experiments'
+    //            }
+    //        },
+    //        mockRequest = {
+    //            headers: {
+    //                'x-github-event': 'pull_request'
+    //            },
+    //            body: {
+    //                payload: JSON.stringify(mockPayload)
+    //            }
+    //        },
+    //        endCalled = false,
+    //        mockResponse = {
+    //            end: function() {
+    //                endCalled = true;
+    //            }
+    //        };
+    //
+    //    validationPerformed = false;
+    //
+    //    handler(mockRequest, mockResponse);
+    //
+    //    assert(validationPerformed, 'validation against PR was not performed');
+    //    assert.equal(validatedSHA, 'sha', 'validated wrong SHA');
+    //    assert.equal(validatedUser, 'login', 'validated wrong user');
+    //    assert.equal(validatorsUsed, 'validators to be used', 'used wrong validators');
+    //    assert(validationPosted, 'validation status was not posted');
+    //    assert(endCalled, 'response was not closed');
+    //
+    //    // Reset just in case further tests use them.
+    //    validationPerformed = undefined;
+    //    validatedSHA = undefined;
+    //    validatedUser = undefined;
+    //    validatorsUsed = undefined;
+    //    validationPosted = undefined;
+    //});
     
     // it('calls push handler when sent a push event', function() {});
     
