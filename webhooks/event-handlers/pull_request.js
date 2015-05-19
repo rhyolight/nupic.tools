@@ -1,6 +1,6 @@
-var shaValidator = require('../sha-validator')
-  , utils = require('../general')
-  , log = require('../logger').logger
+var shaValidator = require('../../utils/sha-validator')
+  , utils = require('../../utils/general')
+  , log = require('../../utils/logger').logger
   ;
 
 /* Handles pull_request events from GitHub. */

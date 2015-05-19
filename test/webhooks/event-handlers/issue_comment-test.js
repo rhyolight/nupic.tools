@@ -1,17 +1,17 @@
 var expect = require('chai').expect
   , assert = require('chai').assert
   , proxyquire = require('proxyquire')
-  , mockIssueCommentPayload = require('../github_payloads/events/issue_comment').payload
-  , mockPrCommentPayload = require('../github_payloads/events/pull_request_comment').payload
-  , mockPrCommits = require('../github_payloads/pr_commits')
+  , mockIssueCommentPayload = require('../../github_payloads/events/issue_comment').payload
+  , mockPrCommentPayload = require('../../github_payloads/events/pull_request_comment').payload
+  , mockPrCommits = require('../../github_payloads/pr_commits')
   ;
 
 describe('issue_comment github webhook event handler', function() {
 
     it('validates PR when someone comments on it', function(done) {
         var validationPerformed = false
-          , handler = proxyquire('../../utils/hook-handlers/issue_comment', {
-                '../sha-validator': {
+          , handler = proxyquire('../../../webhooks/event-handlers/issue_comment', {
+                '../../utils/sha-validator': {
                     performCompleteValidation: function(sha, login, repoClient,
                                                         validators, postStatus,
                                                         callback) {
@@ -43,7 +43,7 @@ describe('issue_comment github webhook event handler', function() {
     });
 
     it('ignores comments on issues', function(done) {
-        var handler = proxyquire('../../utils/hook-handlers/issue_comment', {})
+        var handler = proxyquire('../../../webhooks/event-handlers/issue_comment', {})
           , mockConfig = null
           , mockRepoClient = null
           , mockValidators = 'mock-validators'

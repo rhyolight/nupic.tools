@@ -6,8 +6,8 @@ describe('push github webhook event handler', function() {
 
     it('executes push hook command on push to master', function(done) {
         var executedCommands = []
-          , handler = proxyquire('../../utils/hook-handlers/push', {
-                '../general': {
+          , handler = proxyquire('../../../webhooks/event-handlers/push', {
+                '../../utils/general': {
                     getHooksForMonitorForType: function(type, repoClient) {
                         assert.equal(repoClient, 'mock-repoClient');
                         if (type == 'push') return ['push-hook'];
@@ -37,8 +37,8 @@ describe('push github webhook event handler', function() {
 
     it('does nothing on pushes to non-master branches', function(done) {
         var executedCommands = []
-          , handler = proxyquire('../../utils/hook-handlers/push', {
-                '../general': {
+          , handler = proxyquire('../../../webhooks/event-handlers/push', {
+                '../../utils/general': {
                     getHooksForMonitorForType: function(type, repoClient) {
                         assert.equal(repoClient, 'mock-repoClient');
                         if (type == 'push') return ['push-hook'];
@@ -68,8 +68,8 @@ describe('push github webhook event handler', function() {
 
     it('executes tag hook commands on push to tag', function(done) {
         var executedCommands = []
-          , handler = proxyquire('../../utils/hook-handlers/push', {
-                '../general': {
+          , handler = proxyquire('../../../webhooks/event-handlers/push', {
+                '../../utils/general': {
                     getHooksForMonitorForType: function(type, repoClient) {
                         assert.equal(repoClient, 'mock-repoClient');
                         if (type == 'push') return ['push-hook'];

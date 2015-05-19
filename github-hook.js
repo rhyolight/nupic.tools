@@ -7,7 +7,7 @@ var fs = require('fs')
   , VALIDATOR_DIR = 'validators'
     // All the validator modules
   , dynamicValidatorModules = []
-  , githubHookHandlers = require('./utils/github-hook-handlers')
+  , githubHookHandlers = require('./webhooks/github-hook-handlers')
   , EVENT_HEADER_NAME = 'x-github-event'
   ;
 
@@ -69,8 +69,8 @@ function initializer(clients, config) {
                     log.debug('PAYLOAD:');
                     log.debug(JSON.stringify(payload, null, 2));
                 } else {
-                    log.info('Completed GitHub web hook handling for "' + event
-                        + '" event.');
+                    log.info('Completed Github web hook "' + event + '" on '
+                        + repoSlug + '...');
                 }
                 res.end();
             }

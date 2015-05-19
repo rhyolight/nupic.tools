@@ -6,8 +6,8 @@ describe('pull_request github webhook event handler', function() {
 
     it('triggers CI builds when PR is closed by merging', function(done) {
         var triggerCalled = false
-          , handler = proxyquire('../../utils/hook-handlers/pull_request', {
-                '../sha-validator': {
+          , handler = proxyquire('../../../webhooks/event-handlers/pull_request', {
+                '../../utils/sha-validator': {
                     triggerBuildsOnAllOpenPullRequests: function(client, cb) {
                         assert.equal(client, 'mock repo client', 'Triggering wrong repo client to build CI.');
                         triggerCalled = true;
@@ -38,7 +38,7 @@ describe('pull_request github webhook event handler', function() {
     });
 
     it('ignores PRs closed without merging', function(done) {
-        var prHandler = proxyquire('../../utils/hook-handlers/pull_request', {})
+        var prHandler = proxyquire('../../../webhooks/event-handlers/pull_request', {})
           , mockPayload = {
                 action: 'closed'
               , pull_request: {
@@ -60,7 +60,7 @@ describe('pull_request github webhook event handler', function() {
     });
 
     it('ignores labeled action', function(done) {
-        var prHandler = proxyquire('../../utils/hook-handlers/pull_request', {})
+        var prHandler = proxyquire('../../../webhooks/event-handlers/pull_request', {})
           , mockPayload = {
                 action: 'labeled'
               , pull_request: {
@@ -84,8 +84,8 @@ describe('pull_request github webhook event handler', function() {
 
         var mockValidators = 'mock validators'
           , validationPerformed = false
-          , prHandler = proxyquire('../../utils/hook-handlers/pull_request', {
-                '../sha-validator': {
+          , prHandler = proxyquire('../../../webhooks/event-handlers/pull_request', {
+                '../../utils/sha-validator': {
                     performCompleteValidation: function(sha, user, client, validators, postStatus, cb) {
                         assert.equal(sha, 'PR HEAD sha', 'Wrong PR SHA used for validation');
                         assert.equal(user, 'gh user', 'Wrong github user used for validation');
@@ -96,7 +96,7 @@ describe('pull_request github webhook event handler', function() {
                         cb();
                     }
                 }
-              , '../general': {
+              , '../../utils/general': {
                     lastStatusWasExternal: function(client, sha, cb) {
                         assert.equal(client, 'mock repo client', 'Wrong repo client used for external check');
                         assert.equal(sha, 'PR HEAD sha', 'Wrong PR SHA used for external check');
@@ -126,8 +126,8 @@ describe('pull_request github webhook event handler', function() {
     it('ignores pull requests when last status was not external', function(done) {
 
         var mockValidators = 'mock validators'
-          , prHandler = proxyquire('../../utils/hook-handlers/pull_request', {
-                '../general': {
+          , prHandler = proxyquire('../../../webhooks/event-handlers/pull_request', {
+                '../../utils/general': {
                     lastStatusWasExternal: function(client, sha, cb) {
                         cb(false);
                     }

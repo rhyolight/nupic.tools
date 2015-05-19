@@ -1,5 +1,5 @@
 var _ = require('lodash')
-  , sendMail = require('../mailman')
+  , sendMail = require('../../utils/mailman')
   ;
 
 
@@ -17,7 +17,7 @@ function gollumHandler(payload, config, repoClient, validators, callback) {
         });
         sendMail(to, subject, body, callback);
     } else {
-        // Do nothing if no notfication settings for email address.
+        // Do nothing if no notification settings for email address.
         callback();
     }
 }
