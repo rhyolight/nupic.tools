@@ -88,9 +88,9 @@ function performCompleteValidation(sha
                             + validator.name);
                         validator.validate(
                             sha
-                            , githubUser
-                            , repoClient
-                            , function(err, validationResult) {
+                          , githubUser
+                          , repoClient
+                          , function(err, validationResult) {
                                 if (!err && postStatus) {
                                     postNewNupicStatus(
                                         validator.name, sha,

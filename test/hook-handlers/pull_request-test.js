@@ -2,11 +2,11 @@ var assert = require('assert')
   , proxyquire = require('proxyquire')
   ;
 
-describe('pull request hook event handler', function() {
+describe('pull_request github webhook event handler', function() {
 
     it('triggers CI builds when PR is closed by merging', function(done) {
         var triggerCalled = false
-          , prHandler = proxyquire('../../utils/hook-handlers/pull_request', {
+          , handler = proxyquire('../../utils/hook-handlers/pull_request', {
                 '../sha-validator': {
                     triggerBuildsOnAllOpenPullRequests: function(client, cb) {
                         assert.equal(client, 'mock repo client', 'Triggering wrong repo client to build CI.');
@@ -27,12 +27,13 @@ describe('pull request hook event handler', function() {
             }
           , mockRepoClient = 'mock repo client'
           , mockConfig = null
+          , mockValidators = null
           ;
 
-        prHandler(mockPayload, function() {
+        handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             assert(triggerCalled);
             done();
-        }, mockConfig, mockRepoClient);
+        });
 
     });
 
@@ -49,11 +50,12 @@ describe('pull request hook event handler', function() {
             }
           , mockRepoClient = 'mock repo client'
           , mockConfig = null
+          , mockValidators = null
           ;
 
-        prHandler(mockPayload, function() {
+        prHandler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             done();
-        }, mockConfig, mockRepoClient);
+        });
 
     });
 
@@ -70,11 +72,12 @@ describe('pull request hook event handler', function() {
             }
           , mockRepoClient = 'mock repo client'
           , mockConfig = null
+          , mockValidators = null
           ;
 
-        prHandler(mockPayload, function() {
+        prHandler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             done();
-        }, mockConfig, mockRepoClient);
+        });
     });
 
     it('validates pull request HEAD SHA on any other action when last status was external', function(done) {
@@ -114,10 +117,10 @@ describe('pull request hook event handler', function() {
           , mockConfig = null
           ;
 
-        prHandler(mockPayload, function() {
+        prHandler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             assert(validationPerformed);
             done();
-        }, mockConfig, mockRepoClient, mockValidators);
+        });
     });
 
     it('ignores pull requests when last status was not external', function(done) {
@@ -143,9 +146,9 @@ describe('pull request hook event handler', function() {
           , mockConfig = null
           ;
 
-        prHandler(mockPayload, function() {
+        prHandler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             done();
-        }, mockConfig, mockRepoClient, mockValidators);
+        });
     });
 
 });

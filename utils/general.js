@@ -1,5 +1,6 @@
 var fs = require('fs')
   , path = require('path')
+  , exec = require('child_process').exec
   , _ = require('lodash')
   , RepositoryClient = require('./repo-client')
   , NUPIC_STATUS_PREFIX = 'NuPIC Status:'
@@ -162,11 +163,37 @@ function sterilizeConfig(config) {
     return out;
 }
 
+function executeCommand(command) {
+    log.warn('Executing hook command "%s"', command);
+    exec(command, function (error, stdout, stderr) {
+        log.debug(stdout);
+        if (stderr) { log.warn('STDERR: %s', stderr); }
+        if (error) {
+            log.error('Command execution error: %s', error);
+        }
+    });
+}
+
+function getHooksForMonitorForType(type, repoClient) {
+    var hooks = [];
+    if (repoClient && repoClient.hooks && repoClient.hooks[type]) {
+        // Could be a strong or an array of strings.
+        if (typeof(repoClient.hooks[type]) == 'string') {
+            hooks.push(repoClient.hooks[type]);
+        } else {
+            hooks = repoClient.hooks[type];
+        }
+    }
+    return hooks;
+}
+
 module.exports = {
     initializeModulesWithin: initializeModulesWithin
   , constructRepoClients: constructRepoClients
   , sterilizeConfig: sterilizeConfig
   , sortStatuses: sortStatuses
   , lastStatusWasExternal: lastStatusWasExternal
+  , executeCommand: executeCommand
+  , getHooksForMonitorForType: getHooksForMonitorForType
   , __module: module // for unit testing and mocking require()
 };

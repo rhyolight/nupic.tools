@@ -5,12 +5,9 @@ var fs = require('fs')
   , utils = require('./utils/general')
   , contributors = require('./utils/contributors')
   , VALIDATOR_DIR = 'validators'
-  , // All the validator modules
-    dynamicValidatorModules = []
-  ;
-
-var githubHookHandlerInitializer = require('./utils/github-hook-handlers')
-  , githubHookHandlers = undefined
+    // All the validator modules
+  , dynamicValidatorModules = []
+  , githubHookHandlers = require('./utils/github-hook-handlers')
   , EVENT_HEADER_NAME = 'x-github-event'
   ;
 
@@ -24,11 +21,6 @@ var githubHookHandlerInitializer = require('./utils/github-hook-handlers')
  */
 function initializer(clients, config) {
     dynamicValidatorModules = utils.initializeModulesWithin(VALIDATOR_DIR);
-    githubHookHandlers = githubHookHandlerInitializer(
-        clients,
-        dynamicValidatorModules,
-        config
-    );
 
     return function(req, res) {
         var event
@@ -37,7 +29,6 @@ function initializer(clients, config) {
           , payload
           , repoSlug
           ;
-
         event = headers[EVENT_HEADER_NAME];
         if (! event) {
             throw new Error('Cannot process GitHub web hook event that does ' +
@@ -65,7 +56,7 @@ function initializer(clients, config) {
         }
 
         log.info('Processing Github web hook "' + event + '"...');
-        handler(payload, function(error) {
+        handler(payload, config, clients[repoSlug], dynamicValidatorModules, function(error) {
             if (error) {
                 log.error('Error encountered when processing GitHub web hook event "' + event + '":');
                 log.error(error.toString());
@@ -78,7 +69,7 @@ function initializer(clients, config) {
                     + '" event.');
             }
             res.end();
-        }, config, clients[repoSlug], dynamicValidatorModules);
+        });
     };
 
 }

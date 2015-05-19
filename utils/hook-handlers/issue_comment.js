@@ -1,6 +1,6 @@
 var shaValidator = require('../sha-validator');
 
-function issueCommentHandler(payload, callback, config, repoClient, validators) {
+function issueCommentHandler(payload, config, repoClient, validators, callback) {
     var prNumber = payload.issue.number;
 
     // Ignore comments on issues, we only want to take action on pull requests.
@@ -9,19 +9,14 @@ function issueCommentHandler(payload, callback, config, repoClient, validators) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        var login = undefined;
-        if (! commit.author) {
-            login = commit.commit.author.login || commit.commit.author.name;
-        } else {
-            login = commit.author.login || commit.author.name;
-        }
+        var login = commit.committer.login;
         shaValidator.performCompleteValidation(
             commit.sha
-            , login
-            , repoClient
-            , validators
-            , true
-            , callback
+          , login
+          , repoClient
+          , validators
+          , true
+          , callback
         );
     });
 }

@@ -4,7 +4,7 @@ var shaValidator = require('../sha-validator')
   ;
 
 /* Handles pull_request events from GitHub. */
-function pullRequestHandler(payload, callback, config, repoClient, validators) {
+function pullRequestHandler(payload, config, repoClient, validators, callback) {
     var action = payload.action
       , pullRequest = payload.pull_request
       , githubUser = pullRequest.user.login
