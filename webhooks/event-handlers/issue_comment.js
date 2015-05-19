@@ -1,4 +1,4 @@
-var shaValidator = require('../sha-validator');
+var shaValidator = require('../../utils/sha-validator');
 
 function issueCommentHandler(payload, config, repoClient, validators, callback) {
     var prNumber = payload.issue.number;

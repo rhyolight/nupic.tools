@@ -1,7 +1,7 @@
 var _ = require('lodash')
-  , utils = require('../general')
-  , log = require('../logger').logger
-  , shaValidator = require('../sha-validator')
+  , utils = require('../../utils/general')
+  , log = require('../../utils/logger').logger
+  , shaValidator = require('../../utils/sha-validator')
   , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
   ;
 

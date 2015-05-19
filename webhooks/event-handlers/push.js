@@ -1,6 +1,6 @@
 var _ = require('lodash')
-  , utils = require('../general')
-  , log = require('../logger').logger
+  , utils = require('../../utils/general')
+  , log = require('../../utils/logger').logger
   ;
 
 /*

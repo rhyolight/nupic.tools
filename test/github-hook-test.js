@@ -36,7 +36,7 @@ describe('github hook handler', function() {
 
     it('logs a warning and closes response when unrecognized repository', function() {
         var githubHook = proxyquire('./../github-hook', {
-            './utils/github-hook-handlers': {}
+            './webhooks/github-hook-handlers': {}
           , './utils/general': {
                 initializeModulesWithin: function() {
                     return 'validators to be used';
@@ -92,7 +92,7 @@ describe('github hook handler', function() {
 
     it('logs a warning and closes response when unrecognized event', function() {
         var githubHook = proxyquire('./../github-hook', {
-            './utils/github-hook-handlers': {}
+            './webhooks/github-hook-handlers': {}
           , './utils/general': {
                 initializeModulesWithin: function() {
                     return 'validators to be used';
@@ -150,7 +150,7 @@ describe('github hook handler', function() {
         var prHandlerCalled = false
           , endCalled = false
           , githubHook = proxyquire('./../github-hook', {
-                './utils/github-hook-handlers': {
+                './webhooks/github-hook-handlers': {
                     pull_request: function(payload, config, repoClient, validators, callback) {
                         expect(payload).to.deep.equal(mockPayload);
                         expect(config).to.equal('mock config');
@@ -198,7 +198,7 @@ describe('github hook handler', function() {
         var prHandlerCalled = false
             , endCalled = false
             , githubHook = proxyquire('./../github-hook', {
-                './utils/github-hook-handlers': {
+                './webhooks/github-hook-handlers': {
                     push: function(payload, config, repoClient, validators, callback) {
                         expect(payload).to.deep.equal(mockPayload);
                         expect(config).to.equal('mock config');
@@ -246,7 +246,7 @@ describe('github hook handler', function() {
         var prHandlerCalled = false
             , endCalled = false
             , githubHook = proxyquire('./../github-hook', {
-                './utils/github-hook-handlers': {
+                './webhooks/github-hook-handlers': {
                     status: function(payload, config, repoClient, validators, callback) {
                         expect(payload).to.deep.equal(mockPayload);
                         expect(config).to.equal('mock config');
@@ -294,7 +294,7 @@ describe('github hook handler', function() {
         var prHandlerCalled = false
             , endCalled = false
             , githubHook = proxyquire('./../github-hook', {
-                './utils/github-hook-handlers': {
+                './webhooks/github-hook-handlers': {
                     gollum: function(payload, config, repoClient, validators, callback) {
                         expect(payload).to.deep.equal(mockPayload);
                         expect(config).to.equal('mock config');
