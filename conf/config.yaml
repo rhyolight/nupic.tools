@@ -27,15 +27,10 @@
   #           specified repository.
   hooks:
     numenta/nupic:
-      push: "bin/post_nupic_push.sh"
       build: "bin/post_nupic_build.sh"
-      tag: "bin/post_nupic_tag.sh"
 
     numenta/nupic.core:
       build: "bin/post_nupic.core_build.sh"
-
-    numenta/htm.java:
-      push: "bin/post_htm.java_push.sh"
 
   # These are the GitHub events the server will subscribe to when setting up
   # webhooks. Any exiting webhooks for the current server URL will be deleted.

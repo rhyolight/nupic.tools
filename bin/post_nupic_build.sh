@@ -4,6 +4,7 @@
 # This script is to be executed by the tooling server every time there is a 
 # successful build of the nupic master branch. It is currently used to:
 # - update the sha in nupic.regression of the latest commit pushed
+# - update the sha in nupic.research of the latest commit pushed
 #
 ## Assumptions
 #
