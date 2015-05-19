@@ -12,9 +12,10 @@ var fs = require('fs')
   ;
 
 /**
- * Given all the RepositoryClient objects, this module initializes all the dynamic
- * validators and returns a request handler function to handle all Github web hook
- * requests, including status updates and pull request notifications.
+ * Given all the RepositoryClient objects, this module initializes all the
+ * dynamic validators and returns a request handler function to handle all
+ * Github web hook requests, including status updates and pull request
+ * notifications.
  * @param clients {RepositoryClient[]} Every RepositoryClient for each repo
  *                                     being monitored.
  * @param config {object} Application configuration.
@@ -55,21 +56,25 @@ function initializer(clients, config) {
             return res.end();
         }
 
-        log.info('Processing Github web hook "' + event + '"...');
-        handler(payload, config, clients[repoSlug], dynamicValidatorModules, function(error) {
-            if (error) {
-                log.error('Error encountered when processing GitHub web hook event "' + event + '":');
-                log.error(error.toString());
-                log.debug('HEADERS:');
-                log.debug(headers);
-                log.debug('PAYLOAD:');
-                log.debug(payload);
-            } else {
-                log.info('Completed GitHub web hook handling for "' + event
-                    + '" event.');
+        log.info('Processing Github web hook "' + event + '" on '
+            + repoSlug + '...');
+        handler(payload, config, clients[repoSlug], dynamicValidatorModules,
+            function(error) {
+                if (error) {
+                    log.error('Error encountered when processing GitHub web ' +
+                        'hook event "' + event + '":');
+                    log.error(error.toString());
+                    log.debug('HEADERS:');
+                    log.debug(headers);
+                    log.debug('PAYLOAD:');
+                    log.debug(JSON.stringify(payload, null, 2));
+                } else {
+                    log.info('Completed GitHub web hook handling for "' + event
+                        + '" event.');
+                }
+                res.end();
             }
-            res.end();
-        });
+        );
     };
 
 }
