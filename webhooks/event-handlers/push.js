@@ -31,8 +31,19 @@ function pushHandler(payload, config, repoClient, validators, callback) {
         // Only process pushes to master, and only when there is a push hook
         // defined.
         if (branch == 'master') {
-            _.each(pushHooks, function(hookCmd) {
-                utils.executeCommand(hookCmd);
+            _.each(pushHooks, function(hookProtocol) {
+                var responseInclude;
+                if (_.endsWith(hookProtocol, '.sh')) {
+                    utils.executeCommand(hookProtocol);
+                } else {
+                    log.warn('Executing dynamic webhook event response "%s"',
+                        hookProtocol);
+                    responseInclude = hookProtocol.replace('/webhooks', '.');
+                    require(responseInclude)(payload, function(err) {
+                        log.info('Webhook event response "%s" complete.',
+                            hookProtocol);
+                    });
+                }
             });
         }
     } else if (tag) {
