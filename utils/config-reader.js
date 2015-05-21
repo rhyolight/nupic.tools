@@ -45,16 +45,20 @@ function createMonitorConfigurations(repos, hooks, contributors) {
 }
 
 function read(configFile, callback) {
-    var username = process.env.USER.toLowerCase()
+    var username
       , configSplit = configFile.split('.')
-      , userFile = configSplit.slice(
-            0, configSplit.length - 1
-        ).join('.') + '-' + username + '.yaml'
+      , userFile
       , config = readConfigFileIntoObject(configFile)
       , userConfig = null
       ;
 
-    userConfig = readConfigFileIntoObject(userFile);
+    if (process.env.USER) {
+        username = process.env.USER.toLowerCase();
+        userFile = configSplit.slice(
+                0, configSplit.length - 1
+            ).join('.') + '-' + username + '.yaml';
+        userConfig = readConfigFileIntoObject(userFile);
+    }
 
     function processReposConfig(repos) {
         config.repos = repos;
