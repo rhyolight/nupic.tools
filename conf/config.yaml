@@ -27,7 +27,7 @@
   #           specified repository.
   hooks:
     numenta/nupic:
-      build:
+      push:
        - "./webhooks/event-responses/update-research"
        - "./webhooks/event-responses/update-regression"
 
