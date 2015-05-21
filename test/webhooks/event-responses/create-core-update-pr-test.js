@@ -1,7 +1,7 @@
 var expect = require('chai').expect
-    , assert = require('chai').assert
-    , proxyquire = require('proxyquire')
-    ;
+  , assert = require('chai').assert
+  , proxyquire = require('proxyquire')
+  ;
 
 
 describe('when creating a nupic.core update PR', function() {
