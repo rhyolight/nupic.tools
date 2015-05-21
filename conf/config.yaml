@@ -27,7 +27,9 @@
   #           specified repository.
   hooks:
     numenta/nupic:
-      build: "bin/post_nupic_build.sh"
+      build:
+       - "./webhooks/event-responses/update-research"
+       - "./webhooks/event-responses/update-regression"
 
     numenta/nupic.core:
       build: "bin/post_nupic.core_build.sh"
