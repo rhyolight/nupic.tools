@@ -19,7 +19,7 @@
   #               has signed our license.
   contributors: "http://numenta.org/resources/contributors.csv"
 
-  # hooks: Paths to local scripts that are executed within a shell
+  # hooks: Node require paths to scripts, called with webhook payload
   #        when the key event occurs.
   #   - push: Occurs when code is pushed to `master` branch of the
   #           specified repository.
