@@ -7,11 +7,6 @@ var GitHubApi = require('github')
   , RepositoryClient
   ;
 
-function arraysMatch(left, right) {
-    var sameValues = _.intersection(left, right);
-    return sameValues.length == left.length && sameValues.length == right.length;
-}
-
 /**
  * An interface to the Github repository. Uses the Github API.
  */
@@ -23,6 +18,7 @@ function RepositoryClient(config) {
     this.repo = config.repository;
     this.type = config.type;
     this.contributorsUrl = config.contributors;
+    this.host = config.host;
 
     // Set up GitHub API Client.
     this.github = new GitHubApi({
@@ -210,32 +206,25 @@ RepositoryClient.prototype.confirmWebhookExists
         user: this.org
       , repo: this.repo
     }, function(err, hooks) {
-        var found = false
-          , hookRemovers = []
-          ;
+        var hookRemovers = [];
         if (err) {
             console.error(err);
             return callback(err);
         }
         log.debug('Found %s webhooks for %s', hooks.length, slug);
         hooks.forEach(function(hook) {
-            if (hook.config && url == hook.config.url) {
-                // So there is a webhook for this repo, but it might not have 
-                // the events we want.
-                if (arraysMatch(hook.events, events)) {
-                    found = true;
-                } else {
-                    hookRemovers.push(function(hookRemovalCallback) {
-                        // Remove the old webhook
-                        log.warn('%s: Removing webhook %s for %s.'
-                            , slug, hook.id, url);
-                        me.github.repos.deleteHook({
-                            user: me.org
-                          , repo: me.repo
-                          , id: hook.id
-                        }, hookRemovalCallback);
-                    });
-                }
+            // If the hook URL contains this app's hostname, we should delete.
+            if (hook.config && _.contains(hook.config.url, me.host)) {
+                hookRemovers.push(function(hookRemovalCallback) {
+                    // Remove the old webhook
+                    log.warn('%s: Removing webhook %s for %s.'
+                        , slug, hook.id, url);
+                    me.github.repos.deleteHook({
+                        user: me.org
+                      , repo: me.repo
+                      , id: hook.id
+                    }, hookRemovalCallback);
+                });
             }
         });
         // First, remove any stale webhooks we found.
@@ -243,36 +232,29 @@ RepositoryClient.prototype.confirmWebhookExists
             if (err) {
                 return callback(err);
             }
-            if (! found) {
-                // Only create new webhooks if the events array contains events 
-                // (this is useful if you want to remove all webhooks, just set 
-                // githooks: [] in the config.
-                if (events && events.length) {
-                    me.github.repos.createHook({
-                        user: me.org,
-                        repo: me.repo,
-                        name: 'web',
-                        config: {
-                            url: url
-                        },
-                        events: events
-                    }, function(err, data) {
-                        if (err) {
-                            return callback(err);
-                        }
-                        log.warn(
-                            '%s: created web hook %s for %s, '
-                                + 'monitoring events "%s"'
-                          , slug
-                          , data.id
-                          , data.config.url
-                          , data.events.join(', ')
-                        );
-                        callback();
-                    });
-                } else {
+            if (events && events.length) {
+                me.github.repos.createHook({
+                    user: me.org,
+                    repo: me.repo,
+                    name: 'web',
+                    config: {
+                        url: url
+                    },
+                    events: events
+                }, function(err, data) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    log.warn(
+                        '%s: created web hook %s for %s, '
+                            + 'monitoring events "%s"'
+                      , slug
+                      , data.id
+                      , data.config.url
+                      , data.events.join(', ')
+                    );
                     callback();
-                }
+                });
             } else {
                 callback();
             }

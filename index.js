@@ -40,14 +40,16 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
     if (process.env.PORT) {
         // Local env always overrides port.
         port = process.env.PORT;
+        cfg.port = port;
     }
     if (process.env.HOST) {
         // Local env always overrides host.
         host = process.env.HOST;
+        cfg.host = host;
     }
 
-    baseUrl = 'http://' + host + ':' + port
-    prWebhookUrl = baseUrl + githubHookPath
+    baseUrl = 'http://' + host + ':' + port;
+    prWebhookUrl = baseUrl + githubHookPath;
 
     logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
     logger.info('nupic.tools server starting...');
