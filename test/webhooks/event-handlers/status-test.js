@@ -80,8 +80,8 @@ describe('status github webhook event handler', function() {
                         return ['./webhooks/event-responses/update-regression'];
                     }
                 }
-                , '../event-responses/update-regression': function(payload, callback) {
-                    expect(payload).to.deep.equal(mockPayload);
+                , '../event-responses/update-regression': function(sha, callback) {
+                    expect(sha).to.equal('d93afca4a3dbc425f6d2239e1aeecde218e4f51a');
                     eventResponseCalled = true;
                     callback();
                 }

@@ -115,14 +115,15 @@ describe('push github webhook event handler', function() {
                             assert.fail('unknown monitor type "' + type + '"');
                         }
                     }
-                  , '../event-responses/update-regression': function(payload, callback) {
-                        expect(payload).to.deep.equal(mockPayload);
+                  , '../event-responses/update-regression': function(sha, callback) {
+                        expect(sha).to.equal('mock-sha');
                         eventResponseCalled = true;
                         callback();
                     }
                 })
               , mockPayload = {
-                    repository: { full_name: 'mock-repo' }
+                    after: 'mock-sha'
+                  , repository: { full_name: 'mock-repo' }
                   , ref: 'refs/heads/master'
                 }
               , mockRepoClient = 'mock-repoClient'

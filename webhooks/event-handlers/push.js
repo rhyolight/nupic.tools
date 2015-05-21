@@ -32,14 +32,16 @@ function pushHandler(payload, config, repoClient, validators, callback) {
         // defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookProtocol) {
-                var responseInclude;
+                var sha
+                  , responseInclude;
                 if (_.endsWith(hookProtocol, '.sh')) {
                     utils.executeCommand(hookProtocol);
                 } else {
                     log.warn('Executing dynamic webhook event response "%s"',
                         hookProtocol);
+                    sha = payload.after;
                     responseInclude = hookProtocol.replace('/webhooks', '.');
-                    require(responseInclude)(payload, function(err) {
+                    require(responseInclude)(sha, function(err) {
                         log.info('Webhook event response "%s" complete.',
                             hookProtocol);
                     });

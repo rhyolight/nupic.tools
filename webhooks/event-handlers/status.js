@@ -42,22 +42,20 @@ function statusHandler(payload, config, repoClient, validators, callback) {
         log.info('Github build success event on %s', repoClient.toString());
         // Only process when there is a build hook defined.
         _.each(buildHooks, function(hookProtocol) {
-            //utils.executeCommand(hookProtocol);
-
-            var responseInclude;
+            var sha
+              , responseInclude;
             if (_.endsWith(hookProtocol, '.sh')) {
                 utils.executeCommand(hookProtocol);
             } else {
                 log.warn('Executing dynamic webhook event response "%s"',
                     hookProtocol);
+                sha = payload.sha;
                 responseInclude = hookProtocol.replace('/webhooks', '.');
-                require(responseInclude)(payload, function(err) {
+                require(responseInclude)(sha, function(err) {
                     log.info('Webhook event response "%s" complete.',
                         hookProtocol);
                 });
             }
-
-
         });
         callback();
     }
