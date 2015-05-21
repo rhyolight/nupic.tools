@@ -5,71 +5,6 @@ var expect = require('chai').expect
 
 describe('status github webhook event handler', function() {
 
-    it('calls one build hook command on master build success status event', function(done) {
-        var executedCommands = []
-          , handler = proxyquire('../../../webhooks/event-handlers/status', {
-                '../../utils/general': {
-                    getHooksForMonitorForType: function(type, repoClient) {
-                        expect(type).to.equal('build');
-                        expect(repoClient).to.equal(mockRepoClient);
-                        return ['build-hook-cmd.sh'];
-                    }
-                  , executeCommand: function(cmd) {
-                        executedCommands.push(cmd);
-                    }
-                }
-            })
-          , mockPayload = require('../../github_payloads/status_master_build_success')
-          , mockRepoClient = 'mock-repoClient'
-          , mockConfig = null
-          , mockValidators = null
-          ;
-
-        handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
-            expect(executedCommands).to.have.length(1);
-            expect(executedCommands[0]).to.equal('build-hook-cmd.sh');
-            done();
-        });
-    });
-
-    it('does NOT call build hook commands on non-master build success status event', function(done) {
-        var executedCommands = []
-          , handler = proxyquire('../../../webhooks/event-handlers/status', {
-                '../../utils/general': {
-                    getHooksForMonitorForType: function(type, repoClient) {
-                        expect(type).to.equal('build');
-                        expect(repoClient).to.equal(mockRepoClient);
-                        return ['hook-cmd'];
-                    }
-                  , executeCommand: function(cmd) {
-                        executedCommands.push(cmd);
-                    }
-                }
-                , '../../utils/sha-validator': {
-                    performCompleteValidation: function(sha, committer, repoClient, validators, postStatus, callback) {
-                        callback();
-                    }
-                }
-            })
-          , mockPayload = require('../../github_payloads/status_non-master_build_success')
-          , mockRepoClient = {
-                getCommit: function(sha, callback) {
-                    callback(null, { committer: { login: 'committer-login'} });
-                }
-            }
-          , mockConfig = null
-          , mockValidators = [{
-                name: 'something'
-            }]
-          ;
-
-        handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
-            expect(executedCommands).to.have.length(0);
-            done();
-        });
-
-    });
-
     it('requires and calls push hook module on push to master', function(done) {
         var eventResponseCalled = false
             , handler = proxyquire('../../../webhooks/event-handlers/status', {
@@ -98,6 +33,43 @@ describe('status github webhook event handler', function() {
         });
     });
 
+    it('does NOT call build hook commands on non-master build success status event', function(done) {
+        var executedCommands = []
+            , handler = proxyquire('../../../webhooks/event-handlers/status', {
+                '../../utils/general': {
+                    getHooksForMonitorForType: function(type, repoClient) {
+                        expect(type).to.equal('build');
+                        expect(repoClient).to.equal(mockRepoClient);
+                        return ['hook-cmd'];
+                    }
+                    , executeCommand: function(cmd) {
+                        executedCommands.push(cmd);
+                    }
+                }
+                , '../../utils/sha-validator': {
+                    performCompleteValidation: function(sha, committer, repoClient, validators, postStatus, callback) {
+                        callback();
+                    }
+                }
+            })
+            , mockPayload = require('../../github_payloads/status_non-master_build_success')
+            , mockRepoClient = {
+                getCommit: function(sha, callback) {
+                    callback(null, { committer: { login: 'committer-login'} });
+                }
+            }
+            , mockConfig = null
+            , mockValidators = [{
+                name: 'something'
+            }]
+            ;
+
+        handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
+            expect(executedCommands).to.have.length(0);
+            done();
+        });
+
+    });
 
     it('validates commit SHA on non-master build success status event', function(done) {
         var validationPerformed = false

@@ -32,25 +32,17 @@ function pushHandler(payload, config, repoClient, validators, callback) {
         // defined.
         if (branch == 'master') {
             _.each(pushHooks, function(hookProtocol) {
-                var responseInclude;
-                if (_.endsWith(hookProtocol, '.sh')) {
-                    utils.executeCommand(hookProtocol);
-                } else {
-                    log.warn('Executing dynamic webhook event response "%s"',
+                var responseInclude = hookProtocol.replace('/webhooks', '.');
+                log.warn('Executing dynamic webhook event response "%s"',
+                    hookProtocol);
+                require(responseInclude)(payload, function(err) {
+                    log.info('Webhook event response "%s" complete.',
                         hookProtocol);
-                    responseInclude = hookProtocol.replace('/webhooks', '.');
-                    require(responseInclude)(payload, function(err) {
-                        log.info('Webhook event response "%s" complete.',
-                            hookProtocol);
-                    });
-                }
+                });
             });
         }
     } else if (tag) {
         log.info('Github tag event on %s:%s', repoSlug, tag);
-        _.each(tagHooks, function(hookCmd) {
-            utils.executeCommand(hookCmd);
-        });
     }
     callback();
 }
