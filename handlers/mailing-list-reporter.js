@@ -45,16 +45,20 @@ function mailingListReporter (request, response) {
       , totalSubscribers : 0
       , totalMessages : 0
     };
-    config.mailinglists.forEach(function(mailingList) {
-        getMailingList(mailingList, screenScrapes, data.mailingLists);
-    });
-    q.all(screenScrapes).then(function() {
-        data.mailingLists.forEach(function(ml) {
-            data.totalSubscribers += ml.subscribers;
-            data.totalMessages += ml.messages.total;
+    try {
+        config.mailinglists.forEach(function(mailingList) {
+            getMailingList(mailingList, screenScrapes, data.mailingLists);
         });
-        buildOutput(request, response, data);
-    });
+        q.all(screenScrapes).then(function() {
+            data.mailingLists.forEach(function(ml) {
+                data.totalSubscribers += ml.subscribers;
+                data.totalMessages += ml.messages.total;
+            });
+            buildOutput(request, response, data);
+        });
+    } catch(error) {
+        jsonUtils.renderErrors([error], response);
+    }
 }
 
 function getMailingList (mailingList, screenScrapes, data) {
