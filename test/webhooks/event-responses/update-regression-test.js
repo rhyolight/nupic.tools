@@ -18,7 +18,7 @@ describe('regression test SHA updater event response', function() {
             }
         });
 
-        updateRegression('mock-sha', function(error) {
+        updateRegression({after: 'mock-sha'}, function(error) {
             assert.notOk(error);
             assert.ok(called);
             done();
