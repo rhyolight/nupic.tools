@@ -1,6 +1,7 @@
 ---
-  # Where this application will be hosted
-  host: "issues.numenta.org"
+  # Where this application will be hosted. Can be overrideen in production
+  # environments with $HOST and $PORT.
+  host: "localhost"
   port: 8081
 
   # Location of the directory where logs will be written.

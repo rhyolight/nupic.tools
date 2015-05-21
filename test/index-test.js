@@ -29,7 +29,7 @@ describe('main program', function() {
         });
         it('constructs a proper github webhook url', function() {
             utilStub.constructRepoClients = function(prWebhook, cfg) {
-                assert.equal(prWebhook, 'http://host:666/github-hook', 'Bad Github web hook url created');
+                assert.equal(prWebhook, 'http://host/github-hook', 'Bad Github web hook url created');
             };
             proxyquire('./../index', {
                 './utils/general': utilStub,
