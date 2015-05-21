@@ -49,7 +49,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
     }
 
     baseUrl = 'http://' + host + ':' + port;
-    prWebhookUrl = 'http://' + host + '/' + githubHookPath;
+    prWebhookUrl = 'http://' + host + githubHookPath;
 
     logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
     logger.info('nupic.tools server starting...');
