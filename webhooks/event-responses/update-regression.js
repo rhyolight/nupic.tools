@@ -1,11 +1,11 @@
 var updateNupicModule = require('./update-nupic-module');
 
-module.exports = function(sha, callback) {
+module.exports = function(payload, callback) {
     updateNupicModule(
         'numenta'
       , 'nupic.regression'
-      , sha
-      , 'Automated update of nupic master sha to ' + sha + '.'
+      , payload.after
+      , 'Automated update of nupic master sha to ' + payload.after + '.'
       , callback
     );
 };

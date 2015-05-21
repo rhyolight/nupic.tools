@@ -115,8 +115,8 @@ describe('push github webhook event handler', function() {
                             assert.fail('unknown monitor type "' + type + '"');
                         }
                     }
-                  , '../event-responses/update-regression': function(sha, callback) {
-                        expect(sha).to.equal('mock-sha');
+                  , '../event-responses/update-regression': function(payload, callback) {
+                        expect(payload).to.equal(mockPayload);
                         eventResponseCalled = true;
                         callback();
                     }
