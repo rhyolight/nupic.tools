@@ -37,6 +37,11 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         baseUrl = 'http://' + host + ':' + port,
         prWebhookUrl = baseUrl + githubHookPath;
 
+    if (process.env.PORT) {
+        // Local env always overrides port.
+        port = process.env.PORT;
+    }
+
     logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
     logger.info('nupic.tools server starting...');
     logger.info('nupic.tools will use the following configuration:');
