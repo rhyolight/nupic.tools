@@ -12,7 +12,7 @@ describe('status github webhook event handler', function() {
                     getHooksForMonitorForType: function(type, repoClient) {
                         expect(type).to.equal('build');
                         expect(repoClient).to.equal(mockRepoClient);
-                        return ['build-hook-cmd'];
+                        return ['build-hook-cmd.sh'];
                     }
                   , executeCommand: function(cmd) {
                         executedCommands.push(cmd);
@@ -27,7 +27,7 @@ describe('status github webhook event handler', function() {
 
         handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
             expect(executedCommands).to.have.length(1);
-            expect(executedCommands[0]).to.equal('build-hook-cmd');
+            expect(executedCommands[0]).to.equal('build-hook-cmd.sh');
             done();
         });
     });
@@ -69,6 +69,35 @@ describe('status github webhook event handler', function() {
         });
 
     });
+
+    it('requires and calls push hook module on push to master', function(done) {
+        var eventResponseCalled = false
+            , handler = proxyquire('../../../webhooks/event-handlers/status', {
+                '../../utils/general': {
+                    getHooksForMonitorForType: function(type, repoClient) {
+                        expect(type).to.equal('build');
+                        expect(repoClient).to.equal(mockRepoClient);
+                        return ['./webhooks/event-responses/update-regression'];
+                    }
+                }
+                , '../event-responses/update-regression': function(sha, callback) {
+                    expect(sha).to.equal('d93afca4a3dbc425f6d2239e1aeecde218e4f51a');
+                    eventResponseCalled = true;
+                    callback();
+                }
+            })
+            , mockPayload = require('../../github_payloads/status_master_build_success')
+            , mockRepoClient = 'mock-repoClient'
+            , mockConfig = null
+            , mockValidators = null
+            ;
+
+        handler(mockPayload, mockConfig, mockRepoClient, mockValidators, function() {
+            assert.ok(eventResponseCalled);
+            done();
+        });
+    });
+
 
     it('validates commit SHA on non-master build success status event', function(done) {
         var validationPerformed = false
