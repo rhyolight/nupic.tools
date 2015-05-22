@@ -19,6 +19,10 @@ function RepositoryClient(config) {
     this.type = config.type;
     this.contributorsUrl = config.contributors;
     this.host = config.host;
+    this._createNewWebhooks = ! config.skip_webhook_registration;
+
+    console.log(config.skip_webhook_registration)
+    console.log(this._createNewWebhooks)
 
     // Set up GitHub API Client.
     this.github = new GitHubApi({
@@ -232,7 +236,7 @@ RepositoryClient.prototype.confirmWebhookExists
             if (err) {
                 return callback(err);
             }
-            if (events && events.length) {
+            if (me._createNewWebhooks && events && events.length) {
                 me.github.repos.createHook({
                     user: me.org,
                     repo: me.repo,

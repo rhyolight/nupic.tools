@@ -37,6 +37,14 @@
         {{/each}}
     </ul>
 
+    <h3>The following cronjobs are active:</h3>
+    <ul>
+        {{#each cronjobs}}
+        <li>{{@key}}: {{this}}</li>
+        {{/each}}
+    </ul>
+
+
     <h3>Available add-on services:</h3>
     <table>
         <tbody>
