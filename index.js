@@ -1,60 +1,64 @@
 // MAIN PROGRAM, start here.
 
 // global libs
-var assert = require('assert'),
-    fs = require('fs'),
-    path = require('path'),
+var assert = require('assert')
+  , fs = require('fs')
+  , path = require('path')
+  , _ = require('lodash')
     // ExpressJS and associated middleware
-    express = require('express'),
-    morgan = require('morgan'),
-    bodyParser = require('body-parser'),
+  , express = require('express')
+  , morgan = require('morgan')
+  , bodyParser = require('body-parser')
 
-    logger = require('./utils/logger'),
-    logStream,
+  , logger = require('./utils/logger')
+  , logStream
 
     // local libs
-    utils = require('./utils/general'),
-    githubHookHandler = require('./github-hook'),
-    configReader = require('./utils/config-reader'),
+  , utils = require('./utils/general')
+  , githubHookHandler = require('./github-hook')
+  , configReader = require('./utils/config-reader')
 
     // This path is registered with Github as a webhook URL.
-    githubHookPath = '/github-hook',
+  , githubHookPath = '/github-hook'
 
     // This directory contains all the additional service
     // handlers that will be loaded dynamically and attached
     // to this web server.
-    HANDLER_DIR = 'handlers';
+
+  , HANDLER_DIR = 'handlers'
+  , CRON_DIR = 'cronjobs'
+  ;
 
 // The configReader reads the given file, and merges it with any existing user
 // configuration file.
-configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
+configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, appConfig) {
     if (err) {
         throw (err);
     }
 
-    var host = cfg.host,
-        port = cfg.port || 8081,
+    var host = appConfig.host,
+        port = appConfig.port || 8081,
         baseUrl,
         prWebhookUrl;
 
     if (process.env.PORT) {
         // Local env always overrides port.
         port = process.env.PORT;
-        cfg.port = port;
+        appConfig.port = port;
     }
     if (process.env.HOST) {
         // Local env always overrides host.
         host = process.env.HOST;
-        cfg.host = host;
+        appConfig.host = host;
     }
 
     baseUrl = 'http://' + host + ':' + port;
     prWebhookUrl = 'http://' + host + githubHookPath;
 
-    logger = logger.initialize(cfg.logDirectory, cfg.logLevel);
+    logger = logger.initialize(appConfig.logDirectory, appConfig.logLevel);
     logger.info('nupic.tools server starting...');
     logger.info('nupic.tools will use the following configuration:');
-    logger.debug('nupic.tools configuration:\n', utils.sterilizeConfig(cfg));
+    logger.debug('nupic.tools configuration:\n', utils.sterilizeConfig(appConfig));
 
     // enable web server logging; pipe those log messages through our logger
     logStream = {
@@ -63,10 +67,12 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         }
     };
 
-    utils.constructRepoClients(prWebhookUrl, cfg, function(repoClients) {
-        var dynamicHttpHandlerModules,
-            activeValidators,
-            app = express();
+    utils.constructRepoClients(prWebhookUrl, appConfig, function(repoClients) {
+        var dynamicHttpHandlerModules
+          , cronJobs
+          , activeValidators
+          , app = express()
+          ;
 
         // Enable request/response logging.
         app.use(morgan({
@@ -79,7 +85,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         app.use(bodyParser.urlencoded({ extended: true }));
 
         // This puts the Github webhook handler into place
-        app.use(githubHookPath, githubHookHandler.initializer(repoClients, cfg));
+        app.use(githubHookPath, githubHookHandler.initializer(repoClients, appConfig));
 
         logger.info('The following validators are active:');
         activeValidators = githubHookHandler.getValidators();
@@ -95,7 +101,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
         dynamicHttpHandlerModules.forEach(function(handlerConfig) {
             var urls = Object.keys(handlerConfig);
             urls.forEach(function(url) {
-                var handler = handlerConfig[url](repoClients, dynamicHttpHandlerModules, cfg, activeValidators),
+                var handler = handlerConfig[url](repoClients, dynamicHttpHandlerModules, appConfig, activeValidators),
                     name = handler.title,
                     msg = '\t==> ' + name + ' listening for url pattern: ' + url;
                 if (! handler.disabled) {
@@ -104,6 +110,16 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, cfg) {
                 }
             });
         });
+
+        cronJobs = utils.initializeModulesWithin(CRON_DIR);
+        appConfig.cronjobs = {};
+        _.each(cronJobs, function(job) {
+            logger.info('Starting cron job "%s"', job.name);
+            appConfig.cronjobs[job.name] = job.description;
+            job.start();
+        });
+
+
         app.listen(port, function() {
             logger.info('Server running at %s%s.', baseUrl, '/status');
         });

@@ -67,6 +67,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
             return r.slug == org + '/' + repo;
         }).type || 'unknown';
         monitorConfig.host = config.host;
+        monitorConfig.skip_webhook_registration = config.skip_webhook_registration;
 
         if (! monitorConfig.validators) {
             monitorConfig.validators = {};

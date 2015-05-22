@@ -34,6 +34,7 @@ function generateOutputData(callback) {
             monitors: Object.keys(repoClients)
           , validators: validators
           , handlers: handlers
+          , cronjobs: config.cronjobs
           , rateLimit: rateLimit
         });
     });
