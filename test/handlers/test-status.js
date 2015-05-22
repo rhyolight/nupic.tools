@@ -43,7 +43,11 @@ describe('status reporter', function() {
                 }, {
                     "/handlerB*": function() { return handlerB; }
             }],
-            mockConfig = {},
+            mockConfig = {
+                cronjobs: {
+                    'mock-cron': 'mock-cron-description'
+                }
+            },
             mockValidators = ['validatorA', 'validatorB'],
             endCalled = false;
         handlerA.title = 'handlerA';
