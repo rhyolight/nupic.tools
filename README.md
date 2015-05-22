@@ -1,46 +1,25 @@
-nupic-tools [![Build Status](https://travis-ci.org/numenta/nupic.tools.png?branch=master)](https://travis-ci.org/numenta/nupic.tools) [![Coverage Status](https://coveralls.io/repos/numenta/nupic.tools/badge.png?branch=master)](https://coveralls.io/r/numenta/nupic.tools?branch=master)
+nupic.tools [![Build Status](https://travis-ci.org/numenta/nupic.tools.png?branch=master)](https://travis-ci.org/numenta/nupic.tools) [![Coverage Status](https://coveralls.io/repos/numenta/nupic.tools/badge.png?branch=master)](https://coveralls.io/r/numenta/nupic.tools?branch=master)
 =============
 
-Server for tooling around a development process that ensures the `master` branch is always green, without the need for a development branch. This is being used to support the [development process](https://github.com/numenta/nupic/wiki/Developer-Workflow) of the [NuPIC](http://github.com/numenta/nupic) project, but it is generalized enough to be used for any project.
+This is the tooling server [Numenta](http://numenta.org) uses to support their open source projects. This is being used to support the [development process](https://github.com/numenta/nupic/wiki/Developer-Workflow) of the [NuPIC](http://github.com/numenta/nupic) project, but it is generalized enough to be used for many open-source project on GitHub.
 
-This server registers a web hook URL with Github when it starts up (if it doesn't already exist) and gets notified on pull requests and status changes on the repositories specified in the [configuration](#configuration). When pull requests or SHA status updates are received, it runs [validators](#validators) against the SHAs. 
+## Features
 
-It can be configured to monitor many Github repositories.
+This is a multi-use utility, a kitchen sink of sorts. I have tried to make it as generic as possible so it can be adapted to other open source workflows. But there is still some NuPIC-specific code in here. In all of these cases, this specific code can be removed or replaced without a problem.
 
-## Installation
+### Monitor Activity of Many GitHub Repositories
 
-First, install nodejs and npm. Checkout this codebase and change into the `nupic.tools` directory. Then, run the following `npm` command to install all the dependencies necessary to run this server.
+Repositories to be monitored are defined in a configuration file. On startup, the server will register to receive webhook events from GitHub for each repository. The events to listen to are defined in the configuration file, and handlers for each event can easily be added or changed.
 
-    npm install .
+The way GitHub "client" objects are created and shared across server resources, it is easy to create custom HTTP request handlers that can operation across every repository.
 
-## Running it
+### Custom HTTP Request Handlers
 
-### Configuration
+Just add your own handler in the [`handlers`](handlers) directory. There are several already there, so you can look at them and match their signature. 
 
-Default configuration settings are in the `./conf/config.yml` file. To provide instance-level settings, create a new config file using the username of the logged-in user. For example, mine is called `./conf/config-rhyolight.yml`. This is where you'll keep your instance configuration settings, like your production `host` and `port`. You can also add as many `monitors` as you wish. The key for each monitor should be the Github organization/repository name.
+### Custom GitHub PR Validation
 
-#### Monitors
-
-Each monitor you add to the configuration will be used to register webhook urls with Github. The server listens for updates from Github webhooks, then runs all the [validators](#validators) in the `validators` directory when appropriate. This occurs when a pull request is opened, reopened, or synchronized. The status of the HEAD SHA of each pull request is also monitored, so when outside service update a status of a pull request, the validators rerun on the pull request. 
-
-### Github API Credentials
-
-The following environment variables are required for `nupic.tools` to run:
-
-    export GH_USERNAME=<GH_USERNAME>
-    export GH_PASSWORD=<GH_PASSWORD>
-
-Github username and password are required to access the [Github API](http://developer.github.com/). The credentials used must have push access to the repository declared in the same section.
-
-### Start the server:
-
-    npm start
-
-Now hit http://localhost:8081 (or whatever port you specified in the configuration file) and you should see a status page reporting what repositories are being monitored, as well as what extra services are provided by [HTTP Handlers](#http_handler_addons).
-
-## Validators
-
-Validators are modules stored in the `validators` directory, which follow the same export pattern. Each one exports a function called `validate` that will be passed the following arguments:
+On every update to a Pull Request, the custom PR validators can be executed against each PR. Examples of existing validators are in the [`validators`](validators) directory. Each one exports a function called `validate` that will be passed the following arguments:
 
 - `sha`: the SHA of the pull request's head
 - `githubUser`: the Github login of the pull request originator
@@ -54,30 +33,52 @@ Additionally, each validator may export a `priority`. This should be a number wh
 
 You can add as many validators in the `validator` directory, and they will automatically be used. The current validators are:
 
-- *travis*: Ensures the last travis status was 'success'
 - *contributor*: Ensures pull request originator is within a contributor listing
 - *fastForward*: Ensures the pull request `head` has the `master` branch merged into it
 
-## HTTP Handler Addons
+### CI Build Triggers
 
-It's easy to create additional HTTP handlers for different URL patterns. Just create a module within the `handlers` directory that exports an object keyed by the URL pattern it should handle. The value for each key should be a function that returns a request handler function. This function will be given access to all repository clients for the monitors specified in the configuration, as well as all the other HTTP handlers within the application. The actual request handler function returned by this function will be given an HTTP Request and HTTP response object, node.js style.
+This server is currently configured to trigger Travis-CI and AppVeyor builds for all open PRs whenever another PR merges. This ensures each PR runs with the most recent code in CI. 
 
-## Running shell commands in response to Github hooks
+### Automated Code Pushes
 
-For each `monitor` defined within the configuration file(s), you can provide a list of `hooks`, allowing you to run shell commands in response to Github hook events. For example:
+I use the [github-data](http://github.com/rhyolight/github-data) module to automatically run `git` operations against other repositories when certain things happen. For example, we have a regression test repository that needs to be updated with the most recent SHA on NuPIC's HEAD of master. So anytime a build passes on master, this server updates a file called `nupic_sha.txt` in the `nupic.regression` repository. This is done without making any local `git` calls by using the GitHub Git Data API. See [`webhooks/event-responses/update-regression.js`](webhooks/event-responses/update-regression.js) for implementation details.
 
-    "monitors": {
-        "organization/repository": {
-            "hooks": [{
-                "push": "/path/to/command.sh"
-            }]
-        }
-    }
+### Automated Pull Request Creation
 
-In this example, whenever `nupic.tools` gets a Github webhook for a `push` event against the `organization/repository` repo, the shell script `/path/to/command.sh` will be executed. Currently, no details about the event are passed into the shell script.
+Just like the automated code pushes described above, this server also creates automated pull requests. See [`webhooks/event-responses/create-core-update-pr.js`](webhooks/event-responses/create-core-update-pr.js) for implementation details.
 
-The NuPIC project uses this functionality to run a script that generates API documentation and publish it to the web (see `bin/generate_nupic_docs.sh`). Lists of commands can also be used instead of one string command.
+## Integrations
+### GitHub
 
-## Make sure it stays running!
+In addition to receiving lots of webhooks from GitHub, this server also uses the GitHub API exhaustively to update PR statuses, find open pull requests, merge, get contributors and committers, search issues, etc. See [`utils/repo-client.js`](utils/repo-client.js) for details. 
 
-Scripts are provided within `./bin` to start, stop, and restart this program as a [forever](https://npmjs.org/package/forever) application.
+#### Custom Webhook Configuration and Handling
+
+On startup, the server removes all existing GitHub webhooks registered for the host it is configured to run on. Then it re-registers all new webhooks based on the current configuration. All the handling for these webhooks are within the [`webhooks`](webhooks) directory. The event handling logic exists within files in [`webhooks/event-handlers`](webhooks/event-handlers) directory based on the name of the event. 
+
+### Postmark
+
+The server sends emails via [Postmark](http://postmarkapp.com) whenever the `gollum` (wiki edit) event is received. The email address to send this email to can be configured in the config file.
+
+## Installation
+
+    npm install .
+
+## Requirements
+### Environment Variables
+
+    GH_USERNAME=<login>
+    GH_PASSWORD=<password>
+    APPVEYOR_API_TOKEN=<token>
+    POSTMARK_API_TOKEN=<token>
+
+### Configuration
+
+Default configuration settings are in the `./conf/config.yml` file. To provide instance-level settings, create a new config file using the username of the logged-in user. For example, mine is called `./conf/config-rhyolight.yml`. This is where you'll keep your instance configuration settings, like your production `host` and `port`. You can also add as many `monitors` as you wish. The key for each monitor should be the Github organization/repository name.
+
+### Start the server:
+
+    npm start
+
+Now hit http://localhost:8081 (or whatever port you specified in the configuration file) and you should see a status page reporting what repositories are being monitored, as well as what extra services are provided by [HTTP Handlers](#http_handler_addons).
