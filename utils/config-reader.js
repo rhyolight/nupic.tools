@@ -5,10 +5,17 @@ var fs = require('fs')
   , yaml = require('js-yaml')
   , GH_USERNAME = process.env.GH_USERNAME
   , GH_PASSWORD = process.env.GH_PASSWORD
-  , OVERRIDE_PARAMS = ['host', 'port', 'logDirectory', 'logLevel', 'githooks']
+    // TODO: This smells bad because any time someone wants to add a new config
+    // value and they want the user to be able to override it, they have to add
+    // the key name to this array.
+  , OVERRIDE_PARAMS = [
+        'host', 'port', 'logDirectory', 'logLevel'
+      , 'githooks', 'skip_webhook_registration'
+    ]
   ;
 
 function readConfigFileIntoObject(path) {
+    log.info('Reading config from %s...', path);
     var raw, obj;
     if (! fs.existsSync(path)) {
         log.warn('Config file "' + path + '" does not exist!');
@@ -78,7 +85,6 @@ function read(configFile, callback) {
         config.monitors = createMonitorConfigurations(config.repos,
             config.hooks, config.contributors
         );
-
         callback(null, config);
     }
 

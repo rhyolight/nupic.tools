@@ -21,9 +21,6 @@ function RepositoryClient(config) {
     this.host = config.host;
     this._createNewWebhooks = ! config.skip_webhook_registration;
 
-    console.log(config.skip_webhook_registration)
-    console.log(this._createNewWebhooks)
-
     // Set up GitHub API Client.
     this.github = new GitHubApi({
         version: '3.0.0'
@@ -200,6 +197,10 @@ RepositoryClient.prototype.rateLimit = function(callback) {
     }, callback);
 };
 
+/*
+ * TODO: This is smelly because WTF is this repo client doing removing and
+ * recreating GitHub web hooks? Seems out of scope of its responsibilities.
+ */
 RepositoryClient.prototype.confirmWebhookExists
 = function(url, events, callback) {
     var me = this
@@ -212,7 +213,7 @@ RepositoryClient.prototype.confirmWebhookExists
     }, function(err, hooks) {
         var hookRemovers = [];
         if (err) {
-            console.error(err);
+            log.error(err);
             return callback(err);
         }
         log.debug('Found %s webhooks for %s', hooks.length, slug);

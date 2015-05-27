@@ -1,7 +1,7 @@
 var cheerio = require('cheerio')
   , _ = require('lodash')
   , request = require('request')
-  , nodeURL = require('url')
+  //, nodeURL = require('url')
   , jsonUtils = require('./json')
   , log = require('./logger').logger
   , template = require('./template')
@@ -40,7 +40,7 @@ function buildUrlObjectsSince(archiveUrl, month, year) {
     return urls;
 }
 
-function mailingListReporter (req, res) {
+function mailingListReporter (config, callback) {
     var totalSubscribers = 0
       , totalMessages = 0
       , rosterFetchers = {}
@@ -111,8 +111,7 @@ function mailingListReporter (req, res) {
         };
     });
     async.parallel(rosterFetchers, function(error, data) {
-        if (error) return buildOutput(req, res, error);
-        buildOutput(req, res, {
+        callback(error, {
             mailingLists: data
           , totalSubscribers: totalSubscribers
           , totalMessages: totalMessages
@@ -120,39 +119,28 @@ function mailingListReporter (req, res) {
     });
 }
 
-function isJsonUrl(url) {
-    return nodeURL.parse(url, false, true).pathname.split(".").pop() == "json";
-}
+//function isJsonUrl(url) {
+//    return nodeURL.parse(url, false, true).pathname.split(".").pop() == "json";
+//}
+//
+//function buildOutput (request, response, data)  {
+//    var htmlOut
+//      , templateName = 'mailing-list-report.html'
+//      ;
+//    if (isJsonUrl(request.url)) {
+//        if(nodeURL.parse(request.url).query !== null) {
+//            jsonUtils.renderJsonp(
+//                data
+//              , nodeURL.parse(request.url, true).query.callback
+//              , response
+//            );
+//        } else {
+//            jsonUtils.render(data, response);
+//        }
+//    } else {
+//        htmlOut = template(templateName, data);
+//        response.end(htmlOut);
+//    }
+//}
 
-function buildOutput (request, response, data)  {
-    var htmlOut
-      , templateName = 'mailing-list-report.html'
-      ;
-    if (isJsonUrl(request.url)) {
-        if(nodeURL.parse(request.url).query !== null) {
-            jsonUtils.renderJsonp(
-                data
-              , nodeURL.parse(request.url, true).query.callback
-              , response
-            );
-        } else {
-            jsonUtils.render(data, response);
-        }
-    } else {
-        htmlOut = template(templateName, data);
-        response.end(htmlOut);
-    }
-}
-
-mailingListReporter.title = 'Mailing List Reporter';
-mailingListReporter.description = 'Provides statistics about the mailing list. '
-    + '(Outputs HTML or JSON depending on extention [*.html or *.json]. For '
-    + 'JSONP add query "callback" [ex.: ...?callback=foo].)';
-mailingListReporter.url = '/maillist';
-
-module.exports = {
-    '/maillist*': function(repoClients, httpHandlers, cfg) {
-        config = cfg;
-        return mailingListReporter;
-    }
-};
+module.exports = mailingListReporter;
