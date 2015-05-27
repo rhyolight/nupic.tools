@@ -36,6 +36,8 @@ function initializeModulesWithin(dir) {
  * objects, properly registering Github webhook handlers for each if they don't
  * have them yet.
  *
+ * TODO: This really should be made into a Factory.
+ *
  * If an error occurs during communication with Github, the application startup
  * will fail.
  *

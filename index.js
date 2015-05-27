@@ -29,6 +29,9 @@ var assert = require('assert')
   , CRON_DIR = 'cronjobs'
   ;
 
+// Making a global space for cron jobs to stash their data.
+global._CRON = {};
+
 // The configReader reads the given file, and merges it with any existing user
 // configuration file.
 configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, appConfig) {
@@ -113,10 +116,14 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, appCon
 
         cronJobs = utils.initializeModulesWithin(CRON_DIR);
         appConfig.cronjobs = {};
-        _.each(cronJobs, function(job) {
+        _.each(cronJobs, function(jobInitializer) {
+            var job = jobInitializer(appConfig);
             logger.info('Starting cron job "%s"', job.name);
             appConfig.cronjobs[job.name] = job.description;
             job.start();
+            if (job.runNow) {
+                job._callbacks[0]();
+            }
         });
 
 
