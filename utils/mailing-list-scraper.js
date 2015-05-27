@@ -1,13 +1,10 @@
 var cheerio = require('cheerio')
   , _ = require('lodash')
   , request = require('request')
-  //, nodeURL = require('url')
   , jsonUtils = require('./json')
   , log = require('./logger').logger
-  , template = require('./template')
-  , monthNames = [ 'January', 'February', 'March', 'April', 'May', 'June', 
+  , monthNames = [ 'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December']
-  , path = require('path')
   , async = require('async')
   , config
   ;
@@ -118,29 +115,5 @@ function mailingListReporter (config, callback) {
         });
     });
 }
-
-//function isJsonUrl(url) {
-//    return nodeURL.parse(url, false, true).pathname.split(".").pop() == "json";
-//}
-//
-//function buildOutput (request, response, data)  {
-//    var htmlOut
-//      , templateName = 'mailing-list-report.html'
-//      ;
-//    if (isJsonUrl(request.url)) {
-//        if(nodeURL.parse(request.url).query !== null) {
-//            jsonUtils.renderJsonp(
-//                data
-//              , nodeURL.parse(request.url, true).query.callback
-//              , response
-//            );
-//        } else {
-//            jsonUtils.render(data, response);
-//        }
-//    } else {
-//        htmlOut = template(templateName, data);
-//        response.end(htmlOut);
-//    }
-//}
 
 module.exports = mailingListReporter;
