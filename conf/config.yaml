@@ -46,6 +46,7 @@ githooks:
 
 notifications:
   gollum: matt@numenta.org
+  pr_review: nupic-commit@lists.numenta.org
 
 # Details about each of our mailing lists.
 mailinglists:
