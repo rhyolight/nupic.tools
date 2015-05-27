@@ -4,7 +4,7 @@ var CronJob = require('cron').CronJob
   ;
 
 
-function createCronJob(config) {
+function scrapeMailingLists(config) {
     var job = new CronJob('* * */24 * * *', function() {
         log.info('Starting mailing list scrape.... this will take awhile.');
         mailingListScraper(config, function(error, data) {
@@ -28,7 +28,4 @@ function createCronJob(config) {
     return job;
 }
 
-
-module.exports = function(config) {
-    return createCronJob(config);
-};
+module.exports = scrapeMailingLists;

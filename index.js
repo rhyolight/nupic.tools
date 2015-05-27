@@ -117,7 +117,7 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, appCon
         cronJobs = utils.initializeModulesWithin(CRON_DIR);
         appConfig.cronjobs = {};
         _.each(cronJobs, function(jobInitializer) {
-            var job = jobInitializer(appConfig);
+            var job = jobInitializer(appConfig, repoClients);
             logger.info('Starting cron job "%s"', job.name);
             appConfig.cronjobs[job.name] = job.description;
             job.start();

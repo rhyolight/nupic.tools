@@ -96,12 +96,62 @@ RepositoryClient.prototype.isBehindMaster = function(sha, callback) {
     });
 };
 
-RepositoryClient.prototype.getAllOpenPullRequests = function(callback) {
+RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
+    var me = this, myCallback;
+    if (typeof params == 'function') {
+        myCallback = params;
+        callback = params;
+        params = {};
+    } else {
+        myCallback = callback;
+    }
+
+    function labelIntercept(error, prs) {
+        var labelFetchers = {};
+        if (error) return myCallback(error);
+
+        _.each(prs, function(pr) {
+            labelFetchers[pr.number] = function(labelCallback) {
+                log.debug('fetching labels for %s', pr.number);
+                me.github.issues.getIssueLabels({
+                    user: me.org
+                    , repo: me.repo
+                    , number: pr.number
+                }, labelCallback);
+            };
+        });
+
+        async.parallel(labelFetchers, function(error, labels) {
+            if (error) return myCallback(error);
+            _.each(labels, function(labelData, prNumber) {
+                log.debug('processing labels for PR #%s...', prNumber);
+                var pr = _.find(prs, function(pr) {
+                        return pr.number == prNumber;
+                    })
+                  ;
+                if (! pr) {
+                    return myCallback(
+                        new Error('No labels found for PR #%s!', prNumber)
+                    );
+                }
+                delete labelData.meta;
+                pr.labels = labelData;
+            });
+            // Calling the original callback here or else we get caught in an
+            // endless loop.
+            callback(null, prs);
+        });
+    }
+
+    if (params.includeLabels) {
+        myCallback = labelIntercept;
+    }
+
     this.github.pullRequests.getAll({
         user: this.org
       , repo: this.repo
       , state: 'open'
-    }, callback);
+    }, myCallback);
 };
 
 RepositoryClient.prototype.getContributors = function(callback) {
