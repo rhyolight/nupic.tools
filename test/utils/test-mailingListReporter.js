@@ -29,29 +29,4 @@ describe('/maillist URL handler', function() {
 });
 
 
-describe('Build URL objects since', function() {
-    after(function () {
-        jsdom.env.restore();
-    });
-    it('should call jsdom.env at least twice', function() {
-        var mockConfig = {
-            "mailinglists": [
-                {
-                    "name": "List A",
-                    "rosterUrl": "/ListA/roster/",
-                    "archiveUrl": "/ListA/archive/",
-                    "startmonth": 1,
-                    "startyear": 2014
-                }
-            ]
-        };
-        var requestHandler = urlMap['/maillist*'](
-            null, null, mockConfig
-        );
-        var mockRequest = {};
-        var mockResponse = {};
-        sinon.stub(jsdom, "env");
-        requestHandler(mockRequest, mockResponse);
-        assert(jsdom.env.callCount > 1);
-    });
-});
+
