@@ -83,7 +83,7 @@ function processAllOpenPrs(prs) {
 function reviewPullRequests(config, repoClients) {
     var job;
     prReviewerEmail = config.notifications.pr_review;
-    job = new CronJob('* * */24 * * *', function() {
+    job = new CronJob('5 0 * * *', function() {
         var prFetchers = []
           , prs = [];
         log.info('Starting open PR review...');
