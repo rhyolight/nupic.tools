@@ -103,11 +103,10 @@ function constructRepoClients(prWebhookUrl, config, callback) {
                     if (err) {
                         log.error('Error during webhook confirmation for ' 
                             + repoClient.toString());
-                        die(err);
                     } else {
-                        count++;
+                        repoClients[monitorKey] = repoClient;
                     }
-                    repoClients[monitorKey] = repoClient;
+                    count++;
                     if (count == (Object.keys(config.monitors).length))  {
                         callback(repoClients);
                     }
