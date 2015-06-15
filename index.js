@@ -122,10 +122,9 @@ configReader.read(path.join(__dirname, 'conf/config.yaml'), function(err, appCon
             appConfig.cronjobs[job.name] = job.description;
             job.start();
             if (job.runNow) {
-                job._callbacks[0]();
+              job._callbacks[0]();
             }
         });
-
 
         app.listen(port, function() {
             logger.info('Server running at %s%s.', baseUrl, '/status');
