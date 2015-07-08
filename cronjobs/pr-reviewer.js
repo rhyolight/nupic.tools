@@ -1,4 +1,4 @@
-/* --------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
  * Copyright (C) 2015, Numenta, Inc.  Unless you have purchased from
  * Numenta, Inc. a separate commercial license for this software code, the
  * following terms and conditions apply:
@@ -35,9 +35,16 @@ var CronJob = require('cron').CronJob
   , async = require('async')
   , sendMail = require('../utils/mailman')
   , log = require('../utils/logger').logger
+  , RepoClientStore = {}
   , repos = [
-        'numenta/nupic', 'numenta/nupic.core'
-      , 'numenta/nupic-linux64', 'numenta/nupic-darwin64'
+      //   'numenta/nupic'
+      // , 'numenta/nupic.core'
+      // , 'numenta/nupic-linux64'
+      // , 'numenta/nupic-darwin64'
+        'numenta/numenta.org'
+      , 'brev/numenta.org'
+      , 'GrokSolutions/numenta.com'
+      , 'brev/numenta.com'
     ]
   , readyLabel = 'status:ready'
   , inProgressLabel = 'status:in progress'
@@ -47,17 +54,59 @@ var CronJob = require('cron').CronJob
 
 
 /**
- * Close old expired Pull Requests (older than a month)
+ * Got the Pull Requests, start processing on them now
  * @function
  * @param {Array} prs - List of Pull Request objects from GitHub API
  * @private
  */
-var closePrExpired = function (prs) {
-  log.info('Closing %s expired open pull requests.', prs.length);
+var processAllOpenPrs = function (prs) {
+  var warn = []
+    , close = []
+    , email = []
+    ;
 
+  log.info('Found %s open pull requests.', prs.length);
+
+  // queue actions
   _.each(prs, function(pr) {
-    console.log(pr);
+    var labels = _.pluck(pr.labels, 'name')
+      , updated = moment(pr.updated_at).subtract(26, 'days')
+      , sevenDaysAgo = moment().subtract(7, 'days')
+      , almostMonthAgo= moment().subtract(25, 'days')
+      , monthAgo = moment().subtract(1, 'month')
+      ;
+
+    if (_.contains(labels, readyLabel)) {
+      // This PR is "ready".
+      if (moment(updated).isBefore(sevenDaysAgo)) {
+        email.push(pr);
+      }
+    }
+    else if (
+      _.contains(labels, inProgressLabel) ||
+      _.contains(labels, helpWantedLabel)
+    ) {
+      if (moment(updated).isBefore(monthAgo)) {
+        // This PR is expired and "closing"
+        close.push(pr);
+      }
+      else if (moment(updated).isBefore(almostMonthAgo)) {
+        // This PR is getting warned about expiring soon
+        warn.push(pr);
+      }
+    }
   });
+
+  // execute queued actions
+  if (email.length) {
+    sendPrReviewReminder(email);
+  }
+  if (close.length) {
+    closePrExpired(close);
+  }
+  if (warn.length) {
+    warnPrExpiring(warn);
+  }
 };
 
 /**
@@ -103,57 +152,70 @@ var sendPrReviewReminder = function (prs) {
 };
 
 /**
- * Got the Pull Requests, start processing on them now
+ * Close old expired Pull Requests (older than a month)
  * @function
  * @param {Array} prs - List of Pull Request objects from GitHub API
  * @private
  */
-var processAllOpenPrs = function (prs) {
-  var warn = []
-    , close = []
-    , email = []
-    ;
+var closePrExpired = function (prs) {
+  log.info('Closing %s expired open pull requests.', prs.length);
 
-  log.info('Found %s open pull requests.', prs.length);
-
-  // queue actions
   _.each(prs, function(pr) {
-    var labels = _.pluck(pr.labels, 'name')
-      , updated = new Date(pr.updated_at)
-      , sevenDaysAgo = moment().subtract(7, 'days')
-      , almostMonthAgo= moment().subtract(25, 'days')
-      , monthAgo = moment().subtract(1, 'month')
-      ;
-
-    if (_.contains(labels, readyLabel)) {
-      // This PR is "ready".
-      if (moment(updated).isBefore(sevenDaysAgo)) {
-        email.push(pr);
-      }
-    }
-    else if (
-      _.contains(labels, inProgressLabel) ||
-      _.contains(labels, helpWantedLabel)
-    ) {
-      if (moment(updated).isBefore(monthAgo)) {
-        close.push(pr);
-      }
-      else if (moment(updated).isBefore(almostMonthAgo)) {
-        warn.push(pr);
-      }
-    }
+    var repo = pr.head.repo.full_name;
+    var client = RepoClientStore[repo];
+    console.log('close!', client.github);
   });
-
-  // execute actions
-  if (close.length) {
-    closePrExpired(close);
-  }
-  if (email.length) {
-    sendPrReviewReminder(email);
-  }
-  if (warn.length) {
-  }
 };
+
+/**
+ * Warn old expiring Pull Requests (older than 25 days)
+ * @function
+ * @param {Array} prs - List of Pull Request objects from GitHub API
+ * @private
+ */
+var warnPrExpiring = function (prs) {
+  log.info('Warning %s expiring open pull requests.', prs.length);
+
+  _.each(prs, function(pr) {
+    var repo = pr.head.repo.full_name;
+    var client = RepoClientStore[repo];
+
+console.log(pr.number, pr.user.login, repo);
+
+client.github.issues.getComments(
+  {
+    number: pr.number,
+    user:   pr.user.login,
+    repo:   pr.head.repo.name
+  },
+  function(error, results) {
+    if(error) throw new Error(error);
+    console.log(results);
+  }
+);
+
+// client.github.issues.createComment(
+//   {
+//       body:   '**WARNING!** This Pull Request has been inactive for 25'
+//                 + ' days, and will be **automatically closed in 5 days**'
+//                 + ' if not updated before then.'
+//     , number: pr.number
+//     , repo:   repo
+//     , user:   pr.user.login
+//   },
+//   function (error, result) {
+//     if(error) throw new Error(error);
+//     log.info(
+//       'Expiration warning comment successfully placed on PR #',
+//       pr.number,
+//       result
+//     );
+//   }
+// );
+
+  });
+};
+
 
 /**
  * Main function that loops through all PRs
@@ -165,8 +227,11 @@ var processAllOpenPrs = function (prs) {
  */
 var reviewPullRequests = function (config, repoClients) {
   var job;
+
+  RepoClientStore = repoClients; // global
   prReviewerEmail = config.notifications.pr_review;
-  job = new CronJob('5 * * * *', function() {   // @TODO reset to "5 [0] * * *"
+
+  job = new CronJob('*/1 * * * *', function() {   // @TODO reset to "5 0 * * *"
     var prFetchers = []
       , prs = [];
 
@@ -174,8 +239,6 @@ var reviewPullRequests = function (config, repoClients) {
 
     _.each(repos, function(repo) {
       var repoClient = repoClients[repo];
-// @TODO repoClient is empty here!
-      log.info('Repo / Client : ', repo, repoClient);
       if(repoClient) {
         prFetchers.push(function(callback) {
           repoClient.getAllOpenPullRequests({ includeLabels: true }, callback);
@@ -203,7 +266,6 @@ var reviewPullRequests = function (config, repoClients) {
 
   return job;
 };
-
 
 // Export
 module.exports = reviewPullRequests;

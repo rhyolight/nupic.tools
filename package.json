@@ -19,6 +19,10 @@
     {
       "name": "Utensil Song",
       "email": "utensilcandel@gmail.com"
+    },
+    {
+      "name": "Brev Patterson",
+      "email": "bpatterson@numenta.com"
     }
   ],
   "main": "index.js",
