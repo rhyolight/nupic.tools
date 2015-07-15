@@ -29,28 +29,25 @@
  * @public
  */
 
-var CronJob = require('cron').CronJob
-  , _ = require('lodash')
-  , moment = require('moment')
-  , async = require('async')
-  , sendMail = require('../utils/mailman')
-  , log = require('../utils/logger').logger
-  , RepoClientStore = {}
-  , repos = [
-      //   'numenta/nupic'
-      // , 'numenta/nupic.core'
-      // , 'numenta/nupic-linux64'
-      // , 'numenta/nupic-darwin64'
-        'numenta/numenta.org'
-      , 'brev/numenta.org'
-      , 'GrokSolutions/numenta.com'
-      , 'brev/numenta.com'
-    ]
-  , readyLabel = 'status:ready'
-  , inProgressLabel = 'status:in progress'
-  , helpWantedLabel = 'status:help wanted'
-  , prReviewerEmail
-  ;
+var CronJob =   require('cron').CronJob;
+var _ =         require('lodash');
+var moment =    require('moment');
+var async =     require('async');
+var sendMail =  require('../utils/mailman');
+var log =       require('../utils/logger').logger;
+
+var RepoClientStore = {};
+var repos = [
+  'numenta/nupic',
+  'numenta/nupic.core',
+  'numenta/nupic-linux64',
+  'numenta/nupic-darwin64'
+];
+
+var readyLabel =      'status:ready';
+var inProgressLabel = 'status:in progress';
+var helpWantedLabel = 'status:help wanted';
+var prReviewerEmail = null;
 
 
 /**
@@ -60,19 +57,17 @@ var CronJob = require('cron').CronJob
  * @private
  */
 var processAllOpenPrs = function (prs) {
-  var fetchers = []
-    , warn = []
-    , close = []
-    , email = []
-    ;
+  var fetchers =  [];
+  var warn =      [];
+  var close =     [];
+  var email =     [];
 
   log.info('Found %s open pull requests. Counting admin comments.', prs.length);
 
   // queue fetchers for PR admin comments
   _.each(prs, function(pr) {
-    var repo =    pr.head.repo.full_name
-      , client =  RepoClientStore[repo]
-      ;
+    var repo =    pr.head.repo.full_name;
+    var client =  RepoClientStore[repo];
 
     if(client) {
       fetchers.push(function(callback) {
@@ -82,25 +77,38 @@ var processAllOpenPrs = function (prs) {
   });
 
   log.info('Fetching PR Admin Comments...');
-  async.parallel(fetchers, function(error, prFetched) {
+  async.parallel(fetchers, function(error, prFetches) {
+    var commentCountMap = {};
     if(error) throw error;
 
-    _.each(prFetched, function(prComments) {
+    // match Admin comment counts to PRs
+    _.each(prFetches, function(prComments) {
       _.each(prComments, function(prComment) {
-        console.log('++', prComment.number);
+        var repoId = prComment.repoUser + '/' + prComment.repoName;
+        var client = RepoClientStore[repoId];
+
+        if(prComment.user.login === client.getUsername()) {
+          // count Admin comments only
+          if (prComment.number in commentCountMap) {
+            commentCountMap[prComment.number]++;
+          }
+          else {
+            commentCountMap[prComment.number] = 1;
+          }
+        }
       });
     });
 
     // queue PR actions
     _.each(prs, function(pr) {
-      var labels = _.pluck(pr.labels, 'name')
-        , created = moment(pr.created_at)
-        , updated = moment(pr.updated_at).subtract(26, 'days')
-        , fiveDaysAgo = moment().subtract(5, 'days')
-        , sevenDaysAgo = moment().subtract(7, 'days')
-        , almostMonthAgo= moment().subtract(25, 'days')
-        , monthAgo = moment().subtract(1, 'month')
-        ;
+      var adminCommentCount = commentCountMap[pr.number];
+      var labels = _.pluck(pr.labels, 'name');
+      var created = moment(pr.created_at);
+      var updated = moment(pr.updated_at);
+      var fiveDaysAgo = moment().subtract(5, 'days');
+      var sevenDaysAgo =  moment().subtract(7, 'days');
+      var almostMonthAgo = moment().subtract(25, 'days');
+      var monthAgo = moment().subtract(1, 'month');
 
       if (_.contains(labels, readyLabel)) {
         // This PR is "ready".
@@ -114,7 +122,8 @@ var processAllOpenPrs = function (prs) {
       ) {
         if (
           moment(created).isBefore(monthAgo) &&
-          moment(updated).isBefore(fiveDaysAgo)
+          moment(updated).isBefore(fiveDaysAgo) &&
+          adminCommentCount > 0
         ) {
           // This PR is expired and "closing"
           close.push(pr);
@@ -147,10 +156,9 @@ var processAllOpenPrs = function (prs) {
  * @private
  */
 var sendPrReviewReminder = function (prs) {
-  var to = prReviewerEmail
-    , subject = prs.length + ' NuPIC Pull Requests need review'
-    , body = ''
-    ;
+  var to = prReviewerEmail;
+  var subject = prs.length + ' NuPIC Pull Requests need review';
+  var body = '';
 
   log.info('Sending Review Reminders for %s old open pull requests.', prs.length);
 
@@ -195,8 +203,23 @@ var closePrExpired = function (prs) {
     var repo = pr.head.repo.full_name;
     var client = RepoClientStore[repo];
 
-    console.log('close!', pr.number);
-  });
+    pr.state = 'closed';  // close PR!
+
+    client.updatePullRequest(pr, function(error) {
+      if(error) throw error;
+      log.info("PR # %d closed due to inactivity", pr.number);
+
+      client.createPullRequestComment(
+        pr,
+        'This PullRequest is now automatically **closed due to inactivity**, as'
+          + ' was warned about 5 days ago. *This is an automated message.*',
+        function(error) {
+          if(error) throw error;
+          log.info('Post-Closure expiration comment placed on PR #', pr.number);
+        }
+      );
+    });
+  }); // each
 };
 
 /**
@@ -231,18 +254,19 @@ var warnPrExpiring = function (prs) {
  * @function
  * @param {Object} config - Configuration object context
  * @param {Object} repoClients - Info about each code repository
+ * @module
  * @public
  * @returns {Object} - Individiual job entity
  */
 var reviewPullRequests = function (config, repoClients) {
   var job;
 
-  RepoClientStore = repoClients; // global
+  RepoClientStore = repoClients; // module global-ish
   prReviewerEmail = config.notifications.pr_review;
 
-  job = new CronJob('*/1 * * * *', function() {   // @TODO reset to "5 0 * * *"
-    var prFetchers = []
-      , prs = [];
+  job = new CronJob('5 0 * * *', function() {
+    var prFetchers = [];
+    var prs = [];
 
     log.info('Starting open PR review...');
 
