@@ -74,7 +74,7 @@ var processAllOpenPrs = function (prs) {
         client.getPullRequestComments(pr, callback);
       });
     }
-  });
+  }); // each
 
   log.info('Fetching PR Admin Comments...');
   async.parallel(fetchers, function(error, prFetches) {
@@ -96,8 +96,8 @@ var processAllOpenPrs = function (prs) {
             commentCountMap[prComment.number] = 1;
           }
         }
-      });
-    });
+      }); // each
+    }); // each
 
     // queue PR actions
     _.each(prs, function(pr) {
@@ -133,7 +133,7 @@ var processAllOpenPrs = function (prs) {
           warn.push(pr);
         }
       }
-    }); // queue
+    }); // each queue
 
     // execute queued PR actions
     if (email.length) {
@@ -217,8 +217,8 @@ var closePrExpired = function (prs) {
           if(error) throw error;
           log.info('Post-Closure expiration comment placed on PR #', pr.number);
         }
-      );
-    });
+      ); // createPullRequestComment
+    }); // updatePullRequest
   }); // each
 };
 
@@ -278,7 +278,7 @@ var reviewPullRequests = function (config, repoClients) {
           repoClient.getAllOpenPullRequests({ includeLabels: true }, callback);
         });
       }
-    });
+    }); // each
 
     async.parallel(prFetchers, function(error, prLists) {
       if (error) {
