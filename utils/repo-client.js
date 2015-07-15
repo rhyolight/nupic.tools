@@ -9,6 +9,8 @@ var GitHubApi = require('github')
 
 /**
  * An interface to the Github repository. Uses the Github API.
+ * @class
+ * @module
  */
 function RepositoryClient(config) {
     var me = this;
@@ -70,7 +72,12 @@ function RepositoryClient(config) {
         this.hooks = {};
     }
 }
+module.exports = RepositoryClient;
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.merge = function(head, base, callback) {
     log.info('merging ' + head + ' into ' + base + '...');
     this.github.repos.merge({
@@ -81,6 +88,10 @@ RepositoryClient.prototype.merge = function(head, base, callback) {
     }, callback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.isBehindMaster = function(sha, callback) {
     this.github.repos.compareCommits({
         user: this.org
@@ -96,6 +107,69 @@ RepositoryClient.prototype.isBehindMaster = function(sha, callback) {
     });
 };
 
+/**
+ * Create a new comment for a GitHub PullRequest or Issue
+ * @alias createIssueComment
+ * @method
+ * @param {object} parent - GitHubAPI PullRequest or Issue object,
+ *  to Create comment for.
+ * @param {string} body - Text message body for newly created PR/Issue comment
+ * @param {function} callback - Async callback: function (error) {}
+ * @public
+ */
+RepositoryClient.prototype.createPullRequestComment = function (parent, body, callback) {
+  this.github.issues.createComment(
+    {
+      number: parent.number,
+      user:   parent.base.user.login,
+      repo:   parent.head.repo.name,
+      body:   body
+    },
+    callback
+  );
+};
+RepositoryClient.prototype.createIssueComment = RepositoryClient.prototype.createPullRequestComment;
+
+/**
+ * Get all Comments for a specific GitHub PullRequest or Issue
+ * @alias getIssueComments
+ * @method
+ * @param {object} parent - GitHubAPI PullRequest or Issue object, to
+ *  load admin comments for.
+ * @param {function} callback - Async callback: function (error, comments) {}
+ * @public
+ */
+RepositoryClient.prototype.getPullRequestComments = function (parent, callback) {
+  this.github.issues.getComments(
+    {
+      number: parent.number,
+      repo:   parent.head.repo.name,
+      user:   parent.base.user.login
+    },
+    function(error, results) {
+      if(error) {
+        callback(error);
+        return;
+      }
+      if(results) {
+        results = results.map(function(result) {
+          // augment results with missing helpful info
+          result.number = parent.number;
+          result.repo = parent.head.repo.name;
+          result.user = parent.base.user.login;
+          return result;
+        });
+        callback(null, results);
+      }
+    }
+  );
+};
+RepositoryClient.prototype.getIssueComments = RepositoryClient.prototype.getPullRequestComments;
+
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
     var me = this, myCallback;
     if (typeof params == 'function') {
@@ -154,6 +228,10 @@ RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
     }, myCallback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getContributors = function(callback) {
     var me = this;
     me.github.repos.getContributors({
@@ -168,6 +246,10 @@ RepositoryClient.prototype.getContributors = function(callback) {
     });
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getCommits = function(callback) {
     var me = this;
     me.github.repos.getCommits({
@@ -182,6 +264,10 @@ RepositoryClient.prototype.getCommits = function(callback) {
     });
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getAllStatusesFor = function(sha, callback) {
     this.github.statuses.get({
         user: this.org
@@ -192,6 +278,10 @@ RepositoryClient.prototype.getAllStatusesFor = function(sha, callback) {
     });
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getCommit = function(sha, callback) {
     this.github.repos.getCommit({
         user: this.org
@@ -200,6 +290,10 @@ RepositoryClient.prototype.getCommit = function(sha, callback) {
     }, callback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.compareCommits = function(base, head, callback) {
     this.github.repos.compareCommits({
         user: this.org
@@ -209,6 +303,10 @@ RepositoryClient.prototype.compareCommits = function(base, head, callback) {
     }, callback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getLastCommitOnPullRequest = function(prNumber, callback) {
     this.github.pullRequests.getCommits({
         user: this.org
@@ -224,6 +322,10 @@ RepositoryClient.prototype.getLastCommitOnPullRequest = function(prNumber, callb
     });
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.searchIssues = function(query, callback) {
     this.github.search.issues({
         user: this.org
@@ -232,6 +334,10 @@ RepositoryClient.prototype.searchIssues = function(query, callback) {
     }, callback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getContent = function(path, callback) {
     this.github.repos.getContent({
         user: this.org
@@ -240,6 +346,10 @@ RepositoryClient.prototype.getContent = function(path, callback) {
     }, callback);
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.rateLimit = function(callback) {
     this.github.misc.rateLimit({
         user: this.org
@@ -250,6 +360,8 @@ RepositoryClient.prototype.rateLimit = function(callback) {
 /*
  * TODO: This is smelly because WTF is this repo client doing removing and
  * recreating GitHub web hooks? Seems out of scope of its responsibilities.
+ * @method
+ * @public
  */
 RepositoryClient.prototype.confirmWebhookExists
 = function(url, events, callback) {
@@ -319,7 +431,9 @@ RepositoryClient.prototype.confirmWebhookExists
 
 /**
  * This is a fire-and-forget function.
+ * @method
  * @param prNumber
+ * @public
  */
 RepositoryClient.prototype.triggerTravisForPullRequest = function(prNumber) {
     var travis = this.travis
@@ -343,8 +457,10 @@ RepositoryClient.prototype.triggerTravisForPullRequest = function(prNumber) {
 
 /**
  * This is a fire-and-forget function.
+ * @method
  * @param prNumber
  * @param callback
+ * @public
  */
 RepositoryClient.prototype.triggerAppVeyorForPullRequest = function(prNumber) {
     if (this.appveyorProject) {
@@ -352,7 +468,11 @@ RepositoryClient.prototype.triggerAppVeyorForPullRequest = function(prNumber) {
     }
 };
 
-RepositoryClient.prototype._getRemainingPages 
+/**
+ * @method
+ * @private
+ */
+RepositoryClient.prototype._getRemainingPages
     = function(lastData, allDataOld, callback) {
     var me = this
       , allData = []
@@ -370,12 +490,18 @@ RepositoryClient.prototype._getRemainingPages
     });
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.getRepoSlug = function() {
     return this.org + '/' + this.repo;
 };
 
+/**
+ * @method
+ * @public
+ */
 RepositoryClient.prototype.toString = function() {
     return this.getRepoSlug();
 };
-
-module.exports = RepositoryClient;

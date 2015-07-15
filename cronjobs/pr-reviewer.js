@@ -60,53 +60,84 @@ var CronJob = require('cron').CronJob
  * @private
  */
 var processAllOpenPrs = function (prs) {
-  var warn = []
+  var fetchers = []
+    , warn = []
     , close = []
     , email = []
     ;
 
-  log.info('Found %s open pull requests.', prs.length);
+  log.info('Found %s open pull requests. Counting admin comments.', prs.length);
 
-  // queue actions
+  // queue fetchers for PR admin comments
   _.each(prs, function(pr) {
-    var labels = _.pluck(pr.labels, 'name')
-      , updated = moment(pr.updated_at).subtract(26, 'days')
-      , sevenDaysAgo = moment().subtract(7, 'days')
-      , almostMonthAgo= moment().subtract(25, 'days')
-      , monthAgo = moment().subtract(1, 'month')
+    var repo =    pr.head.repo.full_name
+      , client =  RepoClientStore[repo]
       ;
 
-    if (_.contains(labels, readyLabel)) {
-      // This PR is "ready".
-      if (moment(updated).isBefore(sevenDaysAgo)) {
-        email.push(pr);
-      }
-    }
-    else if (
-      _.contains(labels, inProgressLabel) ||
-      _.contains(labels, helpWantedLabel)
-    ) {
-      if (moment(updated).isBefore(monthAgo)) {
-        // This PR is expired and "closing"
-        close.push(pr);
-      }
-      else if (moment(updated).isBefore(almostMonthAgo)) {
-        // This PR is getting warned about expiring soon
-        warn.push(pr);
-      }
+    if(client) {
+      fetchers.push(function(callback) {
+        client.getPullRequestComments(pr, callback);
+      });
     }
   });
 
-  // execute queued actions
-  if (email.length) {
-    sendPrReviewReminder(email);
-  }
-  if (close.length) {
-    closePrExpired(close);
-  }
-  if (warn.length) {
-    warnPrExpiring(warn);
-  }
+  log.info('Fetching PR Admin Comments...');
+  async.parallel(fetchers, function(error, prFetched) {
+    if(error) throw error;
+
+    _.each(prFetched, function(prComments) {
+      _.each(prComments, function(prComment) {
+        console.log('++', prComment.number);
+      });
+    });
+
+    // queue PR actions
+    _.each(prs, function(pr) {
+      var labels = _.pluck(pr.labels, 'name')
+        , created = moment(pr.created_at)
+        , updated = moment(pr.updated_at).subtract(26, 'days')
+        , fiveDaysAgo = moment().subtract(5, 'days')
+        , sevenDaysAgo = moment().subtract(7, 'days')
+        , almostMonthAgo= moment().subtract(25, 'days')
+        , monthAgo = moment().subtract(1, 'month')
+        ;
+
+      if (_.contains(labels, readyLabel)) {
+        // This PR is "ready".
+        if (moment(updated).isBefore(sevenDaysAgo)) {
+          email.push(pr);
+        }
+      }
+      else if (
+        _.contains(labels, inProgressLabel) ||
+        _.contains(labels, helpWantedLabel)
+      ) {
+        if (
+          moment(created).isBefore(monthAgo) &&
+          moment(updated).isBefore(fiveDaysAgo)
+        ) {
+          // This PR is expired and "closing"
+          close.push(pr);
+        }
+        else if (moment(updated).isBefore(almostMonthAgo)) {
+          // This PR is getting warned about expiring soon
+          warn.push(pr);
+        }
+      }
+    }); // queue
+
+    // execute queued PR actions
+    if (email.length) {
+      sendPrReviewReminder(email);
+    }
+    if (close.length) {
+      closePrExpired(close);
+    }
+    if (warn.length) {
+      warnPrExpiring(warn);
+    }
+
+  }); // async
 };
 
 /**
@@ -163,7 +194,8 @@ var closePrExpired = function (prs) {
   _.each(prs, function(pr) {
     var repo = pr.head.repo.full_name;
     var client = RepoClientStore[repo];
-    console.log('close!', client.github);
+
+    console.log('close!', pr.number);
   });
 };
 
@@ -180,40 +212,17 @@ var warnPrExpiring = function (prs) {
     var repo = pr.head.repo.full_name;
     var client = RepoClientStore[repo];
 
-console.log(pr.number, pr.user.login, repo);
-
-client.github.issues.getComments(
-  {
-    number: pr.number,
-    user:   pr.user.login,
-    repo:   pr.head.repo.name
-  },
-  function(error, results) {
-    if(error) throw new Error(error);
-    console.log(results);
-  }
-);
-
-// client.github.issues.createComment(
-//   {
-//       body:   '**WARNING!** This Pull Request has been inactive for 25'
-//                 + ' days, and will be **automatically closed in 5 days**'
-//                 + ' if not updated before then.'
-//     , number: pr.number
-//     , repo:   repo
-//     , user:   pr.user.login
-//   },
-//   function (error, result) {
-//     if(error) throw new Error(error);
-//     log.info(
-//       'Expiration warning comment successfully placed on PR #',
-//       pr.number,
-//       result
-//     );
-//   }
-// );
-
-  });
+    client.createPullRequestComment(
+      pr,
+      '**WARNING!** This Pull Request has been inactive for 25'
+        + ' days, and will be **automatically closed in 5 days** if'
+        + ' not updated before then. *This is an automated message.*',
+      function(error) {
+        if(error) throw error;
+        log.info('Expiration Warning comment placed on PR #', pr.number);
+      }
+    );
+  }); // each
 };
 
 
@@ -239,6 +248,7 @@ var reviewPullRequests = function (config, repoClients) {
 
     _.each(repos, function(repo) {
       var repoClient = repoClients[repo];
+
       if(repoClient) {
         prFetchers.push(function(callback) {
           repoClient.getAllOpenPullRequests({ includeLabels: true }, callback);
