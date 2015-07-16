@@ -66,34 +66,37 @@ var processAllOpenPrs = function (prs) {
 
   // queue fetchers for PR admin comments
   _.each(prs, function(pr) {
-    var repo =    pr.head.repo.full_name;
+    var repo =    pr.base.repo.full_name;
     var client =  RepoClientStore[repo];
 
     if(client) {
       fetchers.push(function(callback) {
-        client.getPullRequestComments(pr, callback);
+        client.getPullRequestComments(pr.number, callback);
       });
     }
   }); // each
 
   log.info('Fetching PR Admin Comments...');
+
   async.parallel(fetchers, function(error, prFetches) {
     var commentCountMap = {};
     if(error) throw error;
 
-    // match Admin comment counts to PRs
+    // Match Admin comment counts to PRs.
     _.each(prFetches, function(prComments) {
       _.each(prComments, function(prComment) {
-        var repoId = prComment.repoUser + '/' + prComment.repoName;
+        var url = prComment.issue_url.split('/');
+        var prNumber = url.pop();
+        var repoId = url[4] + '/' + url[5];
         var client = RepoClientStore[repoId];
 
         if(prComment.user.login === client.getUsername()) {
           // count Admin comments only
-          if (prComment.number in commentCountMap) {
-            commentCountMap[prComment.number]++;
+          if (prNumber in commentCountMap) {
+            commentCountMap[prNumber]++;
           }
           else {
-            commentCountMap[prComment.number] = 1;
+            commentCountMap[prNumber] = 1;
           }
         }
       }); // each
@@ -145,7 +148,6 @@ var processAllOpenPrs = function (prs) {
     if (warn.length) {
       warnPrExpiring(warn);
     }
-
   }); // async
 };
 
@@ -200,25 +202,29 @@ var closePrExpired = function (prs) {
   log.info('Closing %s expired open pull requests.', prs.length);
 
   _.each(prs, function(pr) {
-    var repo = pr.head.repo.full_name;
+    var repo = pr.base.repo.full_name;
     var client = RepoClientStore[repo];
 
-    pr.state = 'closed';  // close PR!
+    client.updatePullRequest(
+      pr.number,
+      'closed', // close PR
+      pr.title,
+      pr.body,
+      function(error) {
+        if(error) throw error;
+        log.info("PR # %d closed due to inactivity", pr.number);
 
-    client.updatePullRequest(pr, function(error) {
-      if(error) throw error;
-      log.info("PR # %d closed due to inactivity", pr.number);
-
-      client.createPullRequestComment(
-        pr,
-        'This PullRequest is now automatically **closed due to inactivity**, as'
-          + ' was warned about 5 days ago. *This is an automated message.*',
-        function(error) {
-          if(error) throw error;
-          log.info('Post-Closure expiration comment placed on PR #', pr.number);
-        }
-      ); // createPullRequestComment
-    }); // updatePullRequest
+        client.createPullRequestComment(
+          pr.number,
+          'This Pull Request is now automatically **closed due to inactivity**,'
+            + ' as warned about 5 days ago. *This is an automated message.*',
+          function(error) {
+            if(error) throw error;
+            log.info('Post-Closure expiration comment placed on PR #', pr.number);
+          }
+        ); // createPullRequestComment
+      }
+    ); // updatePullRequest
   }); // each
 };
 
@@ -232,11 +238,11 @@ var warnPrExpiring = function (prs) {
   log.info('Warning %s expiring open pull requests.', prs.length);
 
   _.each(prs, function(pr) {
-    var repo = pr.head.repo.full_name;
+    var repo = pr.base.repo.full_name;
     var client = RepoClientStore[repo];
 
     client.createPullRequestComment(
-      pr,
+      pr.number,
       '**WARNING!** This Pull Request has been inactive for 25'
         + ' days, and will be **automatically closed in 5 days** if'
         + ' not updated before then. *This is an automated message.*',

@@ -56,12 +56,11 @@ function constructRepoClients(prWebhookUrl, config, callback) {
 
     // Set up one github client for each repo target in config.
     _.each(monitorKeys, function(monitorKey) {
-        var monitorConfig = config.monitors[monitorKey]
-          , keyParts = monitorKey.split('/')
-          , org = keyParts.shift()
-          , repo = keyParts.shift()
-          , repoClient
-          ;
+        var monitorConfig = config.monitors[monitorKey],
+            keyParts = monitorKey.split('/'),
+            org = keyParts.shift(),
+            repo = keyParts.shift(),
+            repoClient;
 
         monitorConfig.organization = org;
         monitorConfig.repository = repo;
@@ -74,6 +73,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         if (! monitorConfig.validators) {
             monitorConfig.validators = {};
         }
+
         repoClient = new RepositoryClient(monitorConfig);
         log.info('RepositoryClient created for '
             + monitorConfig.username.magenta + ' on '

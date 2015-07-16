@@ -144,18 +144,17 @@ RepositoryClient.prototype.isBehindMaster = function(sha, callback) {
  * Create a new comment for a GitHub PullRequest or Issue
  * @alias createIssueComment
  * @method
- * @param {object} parent - GitHubAPI PullRequest or Issue object,
- *  to Create comment for.
+ * @param {number} prNumber - GitHubAPI PullRequest or Issue ID #
  * @param {string} body - Text message body for newly created PR/Issue comment
  * @param {function} callback - Async callback: function (error) {}
  * @public
  */
-RepositoryClient.prototype.createPullRequestComment = function (parent, body, callback) {
+RepositoryClient.prototype.createPullRequestComment = function (prNumber, body, callback) {
   this.github.issues.createComment(
     {
-      number: parent.number,
-      user:   parent.base.user.login,
-      repo:   parent.head.repo.name,
+      number: prNumber,
+      user:   this.org,
+      repo:   this.repo,
       body:   body
     },
     callback
@@ -166,53 +165,43 @@ RepositoryClient.prototype.createIssueComment = RepositoryClient.prototype.creat
 /**
  * Update a Pull Request
  * @method
- * @param {object} parent - GitHub API PullRequest object to operate on
+ * @param {number} prNumber - GitHub API PullRequest ID # to update
+ * @param {string} state - Pull Request state either 'open' | 'closed'
+ * @param {string} title - Title text of Pull Request
+ * @param {string} body - Body text of Pull Request description
  * @param {function} callback - Async callback: function (error) {}
  * @public
  */
-RepositoryClient.prototype.updatePullRequest = function (parent, callback) {
-  this.github.pullRequests.update({
-    user:   parent.base.user.login,
-    repo:   parent.head.repo.name,
-    number: parent.number,
-    state:  parent.state,
-    title:  parent.title,
-    body:   parent.body
-  }, callback);
+RepositoryClient.prototype.updatePullRequest = function (prNumber, state, title, body, callback) {
+  this.github.pullRequests.update(
+    {
+      user:   this.org,
+      repo:   this.repo,
+      number: prNumber,
+      state:  state,
+      title:  title,
+      body:   body
+    },
+    callback
+  );
 };
 
 /**
  * Get all Comments for a specific GitHub PullRequest or Issue
  * @alias getIssueComments
  * @method
- * @param {object} parent - GitHubAPI PullRequest or Issue object, to
- *  load admin comments for.
+ * @param {number} prNumber - GitHubAPI PullRequest or Issue ID #
  * @param {function} callback - Async callback: function (error, comments) {}
  * @public
  */
-RepositoryClient.prototype.getPullRequestComments = function (parent, callback) {
+RepositoryClient.prototype.getPullRequestComments = function (prNumber, callback) {
   this.github.issues.getComments(
     {
-      number: parent.number,
-      repo:   parent.head.repo.name,
-      user:   parent.base.user.login
+      user:   this.org,
+      repo:   this.repo,
+      number: prNumber
     },
-    function(error, results) {
-      if(error) {
-        callback(error);
-        return;
-      }
-      if(results) {
-        results = results.map(function(result) {
-          // augment results with missing helpful info
-          result.number =   parent.number;
-          result.repoName = parent.head.repo.name;
-          result.repoUser = parent.base.user.login;
-          return result;
-        });
-        callback(null, results);
-      }
-    }
+    callback
   );
 };
 RepositoryClient.prototype.getIssueComments = RepositoryClient.prototype.getPullRequestComments;
