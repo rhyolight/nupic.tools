@@ -56,12 +56,11 @@ function constructRepoClients(prWebhookUrl, config, callback) {
 
     // Set up one github client for each repo target in config.
     _.each(monitorKeys, function(monitorKey) {
-        var monitorConfig = config.monitors[monitorKey]
-          , keyParts = monitorKey.split('/')
-          , org = keyParts.shift()
-          , repo = keyParts.shift()
-          , repoClient
-          ;
+        var monitorConfig = config.monitors[monitorKey],
+            keyParts = monitorKey.split('/'),
+            org = keyParts.shift(),
+            repo = keyParts.shift(),
+            repoClient;
 
         monitorConfig.organization = org;
         monitorConfig.repository = repo;
@@ -74,6 +73,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         if (! monitorConfig.validators) {
             monitorConfig.validators = {};
         }
+
         repoClient = new RepositoryClient(monitorConfig);
         log.info('RepositoryClient created for '
             + monitorConfig.username.magenta + ' on '
@@ -87,7 +87,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
         log.debug(rateLimit.rate);
         log.debug('GitHub API calls remaining before rate limit exceeded: %s.',
             rateLimit.rate.remaining);
-        log.debug('Github API rate limit resets at %s.', 
+        log.debug('Github API rate limit resets at %s.',
             new Date(rateLimit.rate.reset * 1000).toString());
         if (rateLimit.rate.remaining == 0) {
             throw Error('Github API Rate Limit Exceeded!');
@@ -101,7 +101,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
               , config.githooks
               , function(err, hook) {
                     if (err) {
-                        log.error('Error during webhook confirmation for ' 
+                        log.error('Error during webhook confirmation for '
                             + repoClient.toString());
                     } else {
                         repoClients[monitorKey] = repoClient;
