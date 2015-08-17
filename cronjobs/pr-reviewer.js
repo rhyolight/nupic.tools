@@ -38,14 +38,10 @@ var log =       require('../utils/logger').logger;
 
 var RepoClientStore = {};
 var repos = [
-  // 'numenta/nupic',
-  // 'numenta/nupic.core',
-  // 'numenta/nupic-linux64',
-  // 'numenta/nupic-darwin64'
-  'numenta/numenta.org',
-  'GrokSolutions/numenta.com',
-  'brev/numenta.org',
-  'brev/numenta.com'
+  'numenta/nupic',
+  'numenta/nupic.core',
+  'numenta/nupic-linux64',
+  'numenta/nupic-darwin64'
 ];
 
 var commentContent = {
@@ -75,7 +71,7 @@ var processAllOpenPrs = function (prs) {
   var email =     [];
 
   log.info('Found %s open pull requests. Processing comments.', prs.length);
-console.log(prs);
+
   // queue fetchers for PR comments
   _.each(prs, function(pr) {
     var repo =    pr.base.repo.full_name;
@@ -145,16 +141,18 @@ console.log(prs);
         _.contains(labels, inProgressLabel) ||
         _.contains(labels, helpWantedLabel)
       ) {
-console.log('A', wasWarned);
-console.log('B', moment(wasWarned));
-console.log('C', moment(mostRecentComment));
+        // This PR is "in progress" or "help wanted".
         if (
           moment(created).isBefore(monthAgo) &&
           wasWarned &&
           moment(wasWarned).isBefore(fiveDaysAgo) &&
           moment(wasWarned).isSame(mostRecentComment)
         ) {
-          // This PR is expired and "closing"
+          // This PR is expired and "closing", because:
+          //  1. It is older than a month,
+          //  2. we already posted a warning message,
+          //  3. that warning message was posted at least 5 days ago,
+          //  4. and that warning is still the most recent comment on the PR
           close.push(pr);
         }
         else if (moment(updated).isBefore(almostMonthAgo)) {
@@ -293,8 +291,7 @@ var reviewPullRequests = function (config, repoClients) {
   RepoClientStore = repoClients; // module global-ish
   prReviewerEmail = config.notifications.pr_review;
 
-  // job = new CronJob('5 0 * * *', function() {
-  job = new CronJob('* * * * *', function() {
+  job = new CronJob('5 0 * * *', function() {
     var prFetchers = [];
     var prs = [];
 
