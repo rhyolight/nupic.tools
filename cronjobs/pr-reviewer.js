@@ -44,6 +44,14 @@ var repos = [
   'numenta/nupic-darwin64'
 ];
 
+var commentContent = {
+  close: 'This Pull Request is now automatically **closed due to inactivity**,'
+          + ' as warned about 5 days ago. *This is an automated message.*',
+  warn:  '**WARNING!** This Pull Request has been inactive for 25'
+          + ' days, and will be **automatically closed in 5 days** if'
+          + ' not updated before then. *This is an automated message.*'
+};
+
 var readyLabel =      'status:ready';
 var inProgressLabel = 'status:in progress';
 var helpWantedLabel = 'status:help wanted';
@@ -62,9 +70,9 @@ var processAllOpenPrs = function (prs) {
   var close =     [];
   var email =     [];
 
-  log.info('Found %s open pull requests. Counting admin comments.', prs.length);
+  log.info('Found %s open pull requests. Processing comments.', prs.length);
 
-  // queue fetchers for PR admin comments
+  // queue fetchers for PR comments
   _.each(prs, function(pr) {
     var repo =    pr.base.repo.full_name;
     var client =  RepoClientStore[repo];
@@ -76,35 +84,45 @@ var processAllOpenPrs = function (prs) {
     }
   }); // each
 
-  log.info('Fetching PR Admin Comments...');
+  log.info('Fetching PR Comments...');
 
   async.parallel(fetchers, function(error, prFetches) {
-    var commentCountMap = {};
+    var wasWarnedMap = {};
+    var mostRecentCommentMap = {};
+
     if(error) throw error;
 
-    // Match Admin comment counts to PRs.
     _.each(prFetches, function(prComments) {
       _.each(prComments, function(prComment) {
         var url = prComment.issue_url.split('/');
         var prNumber = url.pop();
         var repoId = url[4] + '/' + url[5];
         var client = RepoClientStore[repoId];
+        var created = prComment.created_at;
 
-        if(prComment.user.login === client.getUsername()) {
-          // count Admin comments only
-          if (prNumber in commentCountMap) {
-            commentCountMap[prNumber]++;
-          }
-          else {
-            commentCountMap[prNumber] = 1;
-          }
+        // track the most recent comment
+        if(
+          !(prNumber in mostRecentCommentMap) ||
+          moment(created).isAfter(mostRecentCommentMap[prNumber])
+        ) {
+          mostRecentCommentMap[prNumber] = created;
+        }
+
+        // did we previously warn this PR about being closed ~5 days ago?
+        if(
+          (prComment.user.login === client.getUsername()) &&
+          (prComment.body === commentContent.warn)
+        ) {
+          wasWarnedMap[prNumber] = created;
         }
       }); // each
     }); // each
 
     // queue PR actions
     _.each(prs, function(pr) {
-      var adminCommentCount = commentCountMap[pr.number];
+      var wasWarned = (pr.number in wasWarnedMap) ?
+                        moment(wasWarnedMap[pr.number]) : false;
+      var mostRecentComment = moment(mostRecentCommentMap[pr.number]);
       var labels = _.pluck(pr.labels, 'name');
       var created = moment(pr.created_at);
       var updated = moment(pr.updated_at);
@@ -123,12 +141,18 @@ var processAllOpenPrs = function (prs) {
         _.contains(labels, inProgressLabel) ||
         _.contains(labels, helpWantedLabel)
       ) {
+        // This PR is "in progress" or "help wanted".
         if (
           moment(created).isBefore(monthAgo) &&
-          moment(updated).isBefore(fiveDaysAgo) &&
-          adminCommentCount > 0
+          wasWarned &&
+          moment(wasWarned).isBefore(fiveDaysAgo) &&
+          moment(wasWarned).isSame(mostRecentComment)
         ) {
-          // This PR is expired and "closing"
+          // This PR is expired and "closing", because:
+          //  1. It is older than a month,
+          //  2. we already posted a warning message,
+          //  3. that warning message was posted at least 5 days ago,
+          //  4. and that warning is still the most recent comment on the PR
           close.push(pr);
         }
         else if (moment(updated).isBefore(almostMonthAgo)) {
@@ -216,8 +240,7 @@ var closePrExpired = function (prs) {
 
         client.createPullRequestComment(
           pr.number,
-          'This Pull Request is now automatically **closed due to inactivity**,'
-            + ' as warned about 5 days ago. *This is an automated message.*',
+          commentContent.close,
           function(error) {
             if(error) throw error;
             log.info('Post-Closure expiration comment placed on PR #', pr.number);
@@ -243,9 +266,7 @@ var warnPrExpiring = function (prs) {
 
     client.createPullRequestComment(
       pr.number,
-      '**WARNING!** This Pull Request has been inactive for 25'
-        + ' days, and will be **automatically closed in 5 days** if'
-        + ' not updated before then. *This is an automated message.*',
+      commentContent.warn,
       function(error) {
         if(error) throw error;
         log.info('Expiration Warning comment placed on PR #', pr.number);
