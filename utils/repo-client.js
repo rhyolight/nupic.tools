@@ -47,20 +47,20 @@ function RepositoryClient(config) {
 
     // Set up GitHub API Client.
     this.github = new GitHubApi({
-      version: '3.0.0',
-      timeout: 5000
+        version: '3.0.0',
+        timeout: 5000
     });
     this.github.authenticate({
-      type: 'basic',
-      username: this.user,
-      password: this.password
+        type: 'basic',
+        username: this.user,
+        password: this.password
     });
 
     // Set up Travis-CI API Client.
     this.travis = new Travis({ version: '2.0.0' });
     this.travis.authenticate({
-      username: this.user,
-      password: this.password
+        username: this.user,
+        password: this.password
     }, function() {});
 
     // Set up AppVeyor API Client.
@@ -420,8 +420,8 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
         log.debug('Found %s webhooks for %s', hooks.length, slug);
 
         if (! hooks.forEach) {
-            console.log(slug);
-            console.log(hooks);
+            console.warn('%s seems to be misconfigured! Did it move?', slug);
+            console.warn(hooks);
             return callback();
         }
 
