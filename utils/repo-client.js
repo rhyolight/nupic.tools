@@ -419,12 +419,6 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
         }
         log.debug('Found %s webhooks for %s', hooks.length, slug);
 
-        if (! hooks.forEach) {
-            console.log(hooks);
-            console.log(typeof hooks);
-            return callback();
-        }
-
         hooks.forEach(function(hook) {
             // If the hook URL contains this app's hostname, we should delete.
             if (hook.config && _.contains(hook.config.url, me.host)) {
