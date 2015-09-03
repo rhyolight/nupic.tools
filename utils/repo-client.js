@@ -420,6 +420,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
         log.debug('Found %s webhooks for %s', hooks.length, slug);
 
         if (! hooks.forEach) {
+            console.log(slug);
             console.log(hooks);
             return callback();
         }
