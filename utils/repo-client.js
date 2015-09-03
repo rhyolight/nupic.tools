@@ -417,49 +417,52 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             log.error(err);
             return callback(err);
         }
-        log.debug('Found %s webhooks for %s', hooks.length, slug);
-        hooks.forEach(function(hook) {
-            // If the hook URL contains this app's hostname, we should delete.
-            if (hook.config && _.contains(hook.config.url, me.host)) {
-                hookRemovers.push(function(hookRemovalCallback) {
-                    // Remove the old webhook
-                    log.warn('%s: Removing webhook %s for %s.', slug, hook.id, url);
-                    me.github.repos.deleteHook({
-                      user: me.org,
-                      repo: me.repo,
-                      id:   hook.id
-                    }, hookRemovalCallback);
-                });
-            }
-        });
-        // First, remove any stale webhooks we found.
-        async.parallel(hookRemovers, function(err) {
-            if (err) {
-                return callback(err);
-            }
-            if (me._createNewWebhooks && events && events.length) {
-                me.github.repos.createHook({
-                    user: me.org,
-                    repo: me.repo,
-                    name: 'web',
-                    config: {
-                        url: url
-                    },
-                    events: events
-                }, function(err, data) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    log.warn(
-                      "%s: created web hook %s for %s, monitoring events '%s'",
-                        slug, data.id, data.config.url, data.events.join(', ')
-                    );
+        // Sometimes hooks is undefined, even if there is no err. Not sure why.
+        if (hooks) {
+            log.info('Found %s webhooks for %s', hooks.length, slug);
+            hooks.forEach(function(hook) {
+                // If the hook URL contains this app's hostname, we should delete.
+                if (hook.config && _.contains(hook.config.url, me.host)) {
+                    hookRemovers.push(function(hookRemovalCallback) {
+                        // Remove the old webhook
+                        log.warn('%s: Removing webhook %s for %s.', slug, hook.id, url);
+                        me.github.repos.deleteHook({
+                            user: me.org,
+                            repo: me.repo,
+                            id:   hook.id
+                        }, hookRemovalCallback);
+                    });
+                }
+            });
+            // First, remove any stale webhooks we found.
+            async.parallel(hookRemovers, function(err) {
+                if (err) {
+                    return callback(err);
+                }
+                if (me._createNewWebhooks && events && events.length) {
+                    me.github.repos.createHook({
+                        user: me.org,
+                        repo: me.repo,
+                        name: 'web',
+                        config: {
+                            url: url
+                        },
+                        events: events
+                    }, function(err, data) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        log.warn(
+                            "%s: created web hook %s for %s, monitoring events '%s'",
+                            slug, data.id, data.config.url, data.events.join(', ')
+                        );
+                        callback();
+                    });
+                } else {
                     callback();
-                });
-            } else {
-                callback();
-            }
-        });
+                }
+            });
+        }
     });
 };
 
