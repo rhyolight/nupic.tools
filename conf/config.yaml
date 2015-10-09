@@ -28,7 +28,7 @@ contributors: "http://numenta.org/resources/contributors.csv"
 #           specified repository.
 hooks:
   numenta/nupic:
-    push:
+    build:
      - "./webhooks/event-responses/update-research"
      - "./webhooks/event-responses/update-regression"
 
