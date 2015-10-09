@@ -1,15 +1,15 @@
-var log = require('../../utils/logger').logger
-  , GitData = require('github-data')
-  , shaRegex = /[0-9a-f]{40}/;
+var log = require('../../utils/logger').logger,
+    GitData = require('github-data'),
+    shaRegex = /[0-9a-f]{40}/;
 
 function updater(payload, callback) {
     var gdata = new GitData(
-            process.env.GH_USERNAME
-          , process.env.GH_PASSWORD
-          , 'numenta'
-          , 'nupic'
-        )
-      , sha = payload.sha
+            process.env.GH_USERNAME,
+            process.env.GH_PASSWORD,
+            'numenta',
+            'nupic'
+        ),
+        sha = payload.sha
       ;
 
     log.warn('Creating PR on NuPIC to update nupic.core to %s...', sha);
@@ -17,9 +17,9 @@ function updater(payload, callback) {
         if (error) { return callback(error); }
         master.createBranch('core-update-' + sha, function(error, updateBranch) {
             updateBranch.getFile('.nupic_modules', function(error, file) {
-                var oldContents
-                  , oldSha
-                  , commitMessage;
+                var oldContents,
+                    oldSha,
+                    commitMessage;
                 if (error) { return callback(error); }
                 oldContents = file.blob.getContents();
                 oldSha = shaRegex.exec(oldContents)[0];
@@ -28,8 +28,7 @@ function updater(payload, callback) {
                 file.commit(commitMessage, function(error, commit) {
                     if (error) { return callback(error); }
                     updateBranch.push(commit, function(error) {
-                        var title
-                          , body;
+                        var title, body;
 
                         if (error) { return callback(error); }
 
@@ -37,10 +36,10 @@ function updater(payload, callback) {
                         body = 'See https://github.com/numenta/nupic.core/compare/'
                             + oldSha + '...' + sha + ' for details.';
                         updateBranch.createPullRequest(
-                            master
-                          , title
-                          , body
-                          , function(error, pr) {
+                            master,
+                            title,
+                            body,
+                            function(error, pr) {
                                 if (!error) {
                                     log.warn(
                                         'Created PR #%s at %s',
