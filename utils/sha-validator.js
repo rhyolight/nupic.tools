@@ -70,10 +70,8 @@ function performCompleteValidation(sha
 
         if (prs.total_count == 0) {
             // No PR for this commit, so no point in validating.
-            err = new Error('Skipping validation of ' + sha
-                + ' because it has no PR.');
-            log.warn(err);
-            return callback(err);
+            log.warn('Skipping validation of ' + sha + ' because it has no PR.');
+            return callback();
         }
 
         // There may be more than one PR associated with a commit SHA if someone
