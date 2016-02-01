@@ -20,12 +20,12 @@ function isExternalContext(context, validators) {
  */
 function statusHandler(payload, config, repoClient, validators, callback) {
     var sha = payload.sha
-        , state = payload.state
-        , branches = payload.branches
-        , context = payload.context
-        , isMaster = undefined
-        , buildHooks = undefined
-        ;
+      , state = payload.state
+      , branches = payload.branches
+      , context = payload.context
+      , isMaster = undefined
+      , buildHooks = undefined
+      ;
 
     log.info('State of %s has changed to "%s" for "%s".', sha, state, context);
     // A "success" state means that a build passed. If the build passed on the
@@ -61,11 +61,11 @@ function statusHandler(payload, config, repoClient, validators, callback) {
         }
         shaValidator.performCompleteValidation(
             sha
-            , login
-            , repoClient
-            , validators
-            , true
-            , callback
+          , login
+          , repoClient
+          , validators
+          , true
+          , callback
         );
     } else {
         log.info('Ignoring state change.');
