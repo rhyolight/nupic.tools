@@ -1,9 +1,9 @@
 var _ = require('lodash')
-  , utils = require('../../utils/general')
-  , log = require('../../utils/logger').logger
-  , shaValidator = require('../../utils/sha-validator')
-  , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
-  ;
+    , utils = require('../../utils/general')
+    , log = require('../../utils/logger').logger
+    , shaValidator = require('../../utils/sha-validator')
+    , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
+    ;
 
 
 function isExternalContext(context, validators) {
@@ -20,12 +20,12 @@ function isExternalContext(context, validators) {
  */
 function statusHandler(payload, config, repoClient, validators, callback) {
     var sha = payload.sha
-      , state = payload.state
-      , branches = payload.branches
-      , context = payload.context
-      , isMaster = undefined
-      , buildHooks = undefined
-      ;
+        , state = payload.state
+        , branches = payload.branches
+        , context = payload.context
+        , isMaster = undefined
+        , buildHooks = undefined
+        ;
 
     log.info('State of %s has changed to "%s" for "%s".', sha, state, context);
     // A "success" state means that a build passed. If the build passed on the
@@ -54,13 +54,18 @@ function statusHandler(payload, config, repoClient, validators, callback) {
     }
     // Only process state changes caused by external services (not this server).
     else if (isExternalContext(context, validators)) {
+        var login = payload.commit.committer.login;
+        if (! login) {
+            login = "unknown";
+            log.info(payload.commit);
+        }
         shaValidator.performCompleteValidation(
             sha
-          , payload.commit.committer.login
-          , repoClient
-          , validators
-          , true
-          , callback
+            , login
+            , repoClient
+            , validators
+            , true
+            , callback
         );
     } else {
         log.info('Ignoring state change.');
