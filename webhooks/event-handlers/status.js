@@ -54,9 +54,14 @@ function statusHandler(payload, config, repoClient, validators, callback) {
     }
     // Only process state changes caused by external services (not this server).
     else if (isExternalContext(context, validators)) {
+        var login = payload.commit.committer.login;
+        if (! login) {
+            login = "unknown";
+            log.info(payload.commit);
+        }
         shaValidator.performCompleteValidation(
             sha
-          , payload.commit.committer.login
+          , login
           , repoClient
           , validators
           , true
