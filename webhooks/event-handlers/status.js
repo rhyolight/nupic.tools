@@ -1,9 +1,9 @@
 var _ = require('lodash')
-  , utils = require('../../utils/general')
-  , log = require('../../utils/logger').logger
-  , shaValidator = require('../../utils/sha-validator')
-  , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
-  ;
+    , utils = require('../../utils/general')
+    , log = require('../../utils/logger').logger
+    , shaValidator = require('../../utils/sha-validator')
+    , TRAVIS_CONTEXT = 'continuous-integration/travis-ci'
+    ;
 
 
 function isExternalContext(context, validators) {
