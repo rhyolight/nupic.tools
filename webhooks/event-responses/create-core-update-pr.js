@@ -43,8 +43,8 @@ function updater(payload, callback) {
                             title = 'Updates nupic.core to latest build SHA.';
                             body = 'See https://github.com/numenta/nupic.core/compare/'
                                 + oldSha + '...' + sha + ' for details.';
-                            updateBranch.createPullRequest(
-                                master,
+                            mainFork.createPullRequest(
+                                updateBranch,
                                 title,
                                 body,
                                 function(error, pr) {
