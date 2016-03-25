@@ -1,4 +1,5 @@
-var shaValidator = require('../../utils/sha-validator');
+var log = require('../../utils/logger').logger,
+    shaValidator = require('../../utils/sha-validator');
 
 function issueCommentHandler(payload, config, repoClient, validators, callback) {
     var prNumber = payload.issue.number;
@@ -9,7 +10,14 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        var login = commit.committer.login;
+        var committer = commit.committer;
+        var login = undefined;
+        if (! committer) {
+            log.warn('Missing commit committer!');
+            log.warn(commit);
+            return;
+        }
+        login = committer.login;
         shaValidator.performCompleteValidation(
             commit.sha
           , login
