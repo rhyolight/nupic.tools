@@ -40,7 +40,11 @@ function triggerBuildsOnAllOpenPullRequests(repoClient, callback) {
         _.each(prs, function(pr) {
             triggers.push(function(localCallback) {
                 repoClient.triggerTravisForPullRequest(pr.number, localCallback);
-                repoClient.triggerAppVeyorForPullRequest(pr.number, localCallback);
+                // AppVeyor only gives us one resource and queues the rest, which 
+                // takes a really long time. We decided to turn off automatic PR
+                // rebuilds for AV because of this. Any bugs that slip through
+                // will still be caught on master branch builds. 
+                // repoClient.triggerAppVeyorForPullRequest(pr.number, localCallback);
             });
         });
         async.parallel(triggers, callback);
