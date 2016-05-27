@@ -186,6 +186,9 @@ var sendPrReviewReminder = function (prs) {
   var subject = prs.length + ' NuPIC Pull Requests need review';
   var body = '';
 
+  // Add the date to the subject so it will register as a new topic.
+  subject += ' (' + moment().format('MMM Do YYYY') + ')';
+
   log.info('Sending Review Reminders for %s old open pull requests.', prs.length);
 
   if (! to) {
