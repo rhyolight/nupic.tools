@@ -57,10 +57,6 @@ In addition to receiving lots of webhooks from GitHub, this server also uses the
 
 On startup, the server removes all existing GitHub webhooks registered for the host it is configured to run on. Then it re-registers all new webhooks based on the current configuration. All the handling for these webhooks are within the [`webhooks`](webhooks) directory. The event handling logic exists within files in [`webhooks/event-handlers`](webhooks/event-handlers) directory based on the name of the event. 
 
-### Postmark
-
-The server sends emails via [Postmark](http://postmarkapp.com) whenever the `gollum` (wiki edit) event is received. The email address to send this email to can be configured in the config file.
-
 ## Installation
 
     npm install .
@@ -71,7 +67,6 @@ The server sends emails via [Postmark](http://postmarkapp.com) whenever the `gol
     GH_USERNAME=<login>
     GH_PASSWORD=<password>
     APPVEYOR_API_TOKEN=<token>
-    POSTMARK_API_TOKEN=<token>
 
 ### Configuration
 
