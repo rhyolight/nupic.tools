@@ -32,9 +32,6 @@ hooks:
      - "./webhooks/event-responses/update-research"
      - "./webhooks/event-responses/update-regression"
 
-  numenta/nupic.core:
-    build: "./webhooks/event-responses/create-core-update-pr"
-
 # These are the GitHub events the server will subscribe to when setting up
 # webhooks. Any exiting webhooks for the current server URL will be deleted.
 githooks:
