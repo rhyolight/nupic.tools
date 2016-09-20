@@ -103,6 +103,7 @@ function constructRepoClients(prWebhookUrl, config, callback) {
                     if (err) {
                         log.error('Error during webhook confirmation for '
                             + repoClient.toString());
+                        log.error(err);
                     } else {
                         repoClients[monitorKey] = repoClient;
                     }
