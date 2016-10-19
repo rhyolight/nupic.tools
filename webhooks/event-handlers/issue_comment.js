@@ -10,7 +10,7 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        log.debug(commit);
+        log.debug(JSON.stringify(commit, null, 2));
         var committer = commit.committer;
         var login = undefined;
         if (! committer) {
