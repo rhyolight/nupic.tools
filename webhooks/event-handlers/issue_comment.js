@@ -10,14 +10,9 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        var githubUser = commit.author.name;
-        if (githubUser == undefined) {
-            log.debug(JSON.stringify(commit, null, 2));
-            return;
-        }
         shaValidator.performCompleteValidation(
             commit.sha
-          , commit.author.name
+          , commit.commit.author.name
           , repoClient
           , validators
           , true
