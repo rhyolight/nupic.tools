@@ -10,6 +10,7 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
+        console.log(commit.commit.author);
         shaValidator.performCompleteValidation(
             commit.sha
           , commit.commit.author.name
