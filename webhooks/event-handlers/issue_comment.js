@@ -10,10 +10,19 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        console.log(commit.commit.author);
+        var login = commit.author.login;
+        if (! committer) {
+            login = commit.committer.login;
+        }
+        if (! committer) {
+            log.warn('Missing commit committer!');
+            log.warn(commit);
+            return;
+        }
+        login = committer.login;
         shaValidator.performCompleteValidation(
             commit.sha
-          , commit.commit.author.name
+          , login
           , repoClient
           , validators
           , true
