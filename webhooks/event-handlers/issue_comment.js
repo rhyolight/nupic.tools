@@ -11,10 +11,10 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
         var login = commit.author.login;
-        if (! committer) {
+        if (! login) {
             login = commit.committer.login;
         }
-        if (! committer) {
+        if (! login) {
             log.warn('Missing commit committer!');
             log.warn(commit);
             return;
