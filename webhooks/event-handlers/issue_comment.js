@@ -10,9 +10,11 @@ function issueCommentHandler(payload, config, repoClient, validators, callback) 
     }
 
     repoClient.getLastCommitOnPullRequest(prNumber, function(err, commit) {
-        var login = commit.author.login;
-        if (! login) {
+        var login;
+        if (commit.committer) {
             login = commit.committer.login;
+        } else if (commit.author) {
+            login = commit.author.login;
         }
         if (! login) {
             log.warn('Cannot fine login for last PR commit!');
