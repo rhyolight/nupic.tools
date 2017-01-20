@@ -101,7 +101,12 @@ function read(configFile, callback) {
             if (err) {
                 return callback(err);
             }
-            repos = yaml.safeLoad("---\n" + body).repos;
+            try {
+                repos = yaml.safeLoad(body).repos;
+            } catch(e) {
+                console.error(e);
+                throw new Error('Config file "' + config.repos_url + '" is invalid YAML!');
+            }
             processReposConfig(repos);
         });
     }
