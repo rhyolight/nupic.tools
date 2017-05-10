@@ -31,7 +31,7 @@ function findClientFor(sha, callback) {
             return callback();
         }
         nextClient.getCommit(sha, function(err, commit) {
-            if (! err && commit) {
+            if (! err && commit && commit.sha) {
                 found = true;
                 callback(nextClient, commit);
             } else {
