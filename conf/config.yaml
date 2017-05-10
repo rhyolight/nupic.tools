@@ -18,7 +18,7 @@ repos_url: "http://numenta.org/resources/repos.yaml"
 #               signed Numenta's contributor license. This is used
 #               for validating pull requests, ensuring the author
 #               has signed our license.
-contributors: "http://numenta.org/resources/contributors.csv"
+contributors: "http://staging.numenta.org/resources/contributors.csv"
 
 # hooks: Node require paths to scripts, called with webhook payload
 #        when the key event occurs.
