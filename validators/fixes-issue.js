@@ -3,7 +3,7 @@ var _ = require('lodash')
   , fixesNumberRegex =
         /(close[s|d]?|fix|fixes|resolve[s|d]?):? #[\d]*/i
   , fixesUrlRegex =
-        /(close[s|d]?|fix|fixes|resolve[s|d]?):? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
+        /(close[s|d]?|fix|fixes|contributes to|resolve[s|d]?):? https?:\/\/github.com\/([\da-z\.-]+)\/([\da-z\.-]+)\/issues\/\d{1,10}/i
   , log = require('../utils/logger').logger
   , NAME = 'Fixes Issue Validator'
   ;
