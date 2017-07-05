@@ -92,23 +92,10 @@ function read(configFile, callback) {
     if (config.repos) {
         processReposConfig(config.repos);
     } else {
-        // Fail now if there is no repos_url.
-        if (! config.repos_url) {
-            return callback(Error('Configuration is missing "repos_url".'));
+        if (! config.repos) {
+            return callback(Error('Configuration is missing "repos".'));
         }
-        request.get(config.repos_url, function(err, resp, body) {
-            var repos;
-            if (err) {
-                return callback(err);
-            }
-            try {
-                repos = yaml.safeLoad(body).repos;
-            } catch(e) {
-                console.error(e);
-                throw new Error('Config file "' + config.repos_url + '" is invalid YAML!');
-            }
-            processReposConfig(repos);
-        });
+        processReposConfig(config.repos)
     }
 
 }

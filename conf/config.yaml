@@ -10,10 +10,6 @@ logDirectory: "logs"
 # Default log level.
 logLevel: "debug"
 
-# Monitored repositories are loaded from this URL. If they have travis enabled,
-# it is assumed they should have the travis-validator enabled.
-repos_url: "http://numenta.org/resources/repos.yaml"
-
 # contributors: URL to CSV file containing a list of people who've
 #               signed Numenta's contributor license. This is used
 #               for validating pull requests, ensuring the author
@@ -43,23 +39,93 @@ githooks:
 notifications:
   pr_review: discourse-committers@numenta.org
 
-# Details about each of our mailing lists.
-mailinglists:
-  -
-    name: "NuPIC General"
-    rosterUrl: "http://lists.numenta.org/mailman/roster/nupic_lists.numenta.org"
-    archiveUrl: "http://lists.numenta.org/pipermail/nupic_lists.numenta.org/"
-    startmonth: 5
-    startyear: 2013
-  -
-    name: "NuPIC Hackers"
-    rosterUrl: "http://lists.numenta.org/mailman/roster/nupic-hackers_lists.numenta.org"
-    archiveUrl: "http://lists.numenta.org/pipermail/nupic-hackers_lists.numenta.org/"
-    startmonth: 11
-    startyear: 2013
-  -
-    name: "NuPIC Theory"
-    rosterUrl: "http://lists.numenta.org/mailman/roster/nupic-theory_lists.numenta.org"
-    archiveUrl: "http://lists.numenta.org/pipermail/nupic-theory_lists.numenta.org/"
-    startmonth: 3
-    startyear: 2014
+repos:
+
+  # Primary NuPIC repositories
+  - slug: numenta/nupic
+    type: primary
+    coverage: true
+
+  - slug: numenta/nupic.core
+    type: primary
+    coverage: true
+
+  # Tooling repositories
+  - slug: numenta/nupic.tools
+    type: tooling
+    travis: true
+    coverage: true
+
+  - slug: numenta/nupic.regression
+    type: tooling
+
+  - slug: rhyolight/sprinter.js
+    type: tooling
+    travis: true
+    coverage: true
+    deploy: "https://www.npmjs.org/package/sprinter"
+    monitor: false
+
+  - slug: rhyolight/sprinter-dash
+    type: tooling
+    deploy: "https://www.npmjs.org/package/sprinter-dash"
+    monitor: false
+
+  - slug: "rhyolight/travis-foreman"
+    type: tooling
+    travis: true
+    coverage: true
+    deploy: "https://pypi.python.org/pypi/pycept/"
+    monitor: false
+
+  # Support projects
+  - slug: numenta/NAB
+    type: support
+
+  - slug: numenta/htmresearch
+    type: support
+
+  - slug: numenta/htmresearch-core
+    type: support
+
+  - slug: numenta/cortipy
+    type: support
+    travis: true
+    coverage: true
+
+  # NuPIC applications
+  - slug: numenta/numenta-apps
+    type: app
+    monitor: false
+
+  - slug: numenta/nupic.geospatial
+    type: app
+    travis: true
+    coverage: true
+
+  - slug: nupic-community/nupic.studio
+    type: app
+    monitor: false
+
+  - slug: numenta/nupic.cerebro
+    type: app
+
+  - slug: numenta/nupic.cerebro2
+    type: app
+
+  - slug: numenta/nupic.cerebro2.server
+    type: app
+
+  - slug: numenta/nupic.nlp-examples
+    type: app
+
+  - slug: numenta/htm.java-examples
+    type: app
+    travis: true
+    coverage: true
+
+  # Ports of HTM to other environments
+  - slug: numenta/htm.java
+    type: port
+    travis: true
+    coverage: true

@@ -84,12 +84,12 @@ function constructRepoClients(prWebhookUrl, config, callback) {
 
     // Check the rate limit before making any real calls.
     uncheckedClients[0].rateLimit(function(err, rateLimit) {
-        log.debug(rateLimit.rate);
+        var rate = rateLimit.data.rate;
         log.debug('GitHub API calls remaining before rate limit exceeded: %s.',
-            rateLimit.rate.remaining);
+            rate.remaining);
         log.debug('Github API rate limit resets at %s.',
-            new Date(rateLimit.rate.reset * 1000).toString());
-        if (rateLimit.rate.remaining == 0) {
+            new Date(rate.reset * 1000).toString());
+        if (rate.remaining == 0) {
             throw Error('Github API Rate Limit Exceeded!');
         }
 

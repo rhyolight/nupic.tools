@@ -47,8 +47,8 @@ function RepositoryClient(config) {
 
     // Set up GitHub API Client.
     this.github = new GitHubApi({
-        version: '3.0.0',
-        timeout: 5000
+        timeout: 5000,
+        // debug: true,
     });
     this.github.authenticate({
         type: 'basic',
@@ -114,7 +114,7 @@ RepositoryClient.prototype.getUsername = function () {
 RepositoryClient.prototype.merge = function(head, base, callback) {
     log.info('merging ' + head + ' into ' + base + '...');
     this.github.repos.merge({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       base: base,
       head: head
@@ -127,7 +127,7 @@ RepositoryClient.prototype.merge = function(head, base, callback) {
  */
 RepositoryClient.prototype.isBehindMaster = function(sha, callback) {
     this.github.repos.compareCommits({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       base: 'master',
       head: sha
@@ -153,7 +153,7 @@ RepositoryClient.prototype.createPullRequestComment = function (prNumber, body, 
   this.github.issues.createComment(
     {
       number: prNumber,
-      user:   this.org,
+      owner:   this.org,
       repo:   this.repo,
       body:   body
     },
@@ -175,7 +175,7 @@ RepositoryClient.prototype.createIssueComment = RepositoryClient.prototype.creat
 RepositoryClient.prototype.updatePullRequest = function (prNumber, state, title, body, callback) {
   this.github.pullRequests.update(
     {
-      user:   this.org,
+      owner:   this.org,
       repo:   this.repo,
       number: prNumber,
       state:  state,
@@ -197,7 +197,7 @@ RepositoryClient.prototype.updatePullRequest = function (prNumber, state, title,
 RepositoryClient.prototype.getPullRequestComments = function (prNumber, callback) {
   this.github.issues.getComments(
     {
-      user:   this.org,
+      owner:   this.org,
       repo:   this.repo,
       number: prNumber
     },
@@ -228,7 +228,7 @@ RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
             labelFetchers[pr.number] = function(labelCallback) {
                 log.debug('fetching labels for %s', pr.number);
                 me.github.issues.getIssueLabels({
-                    user:   me.org,
+                    owner:   me.org,
                     repo:   me.repo,
                     number: pr.number
                 }, labelCallback);
@@ -262,7 +262,7 @@ RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
     }
 
     this.github.pullRequests.getAll({
-      user:   this.org,
+      owner:   this.org,
       repo:   this.repo,
       state:  'open'
     }, myCallback);
@@ -275,7 +275,7 @@ RepositoryClient.prototype.getAllOpenPullRequests = function(params, callback) {
 RepositoryClient.prototype.getContributors = function(callback) {
     var me = this;
     me.github.repos.getContributors({
-      user: me.org,
+      owner: me.org,
       repo: me.repo
     }, function(err, contributors) {
         if (err) {
@@ -293,7 +293,7 @@ RepositoryClient.prototype.getContributors = function(callback) {
 RepositoryClient.prototype.getCommits = function(callback) {
     var me = this;
     me.github.repos.getCommits({
-      user: me.org,
+      owner: me.org,
       repo: me.repo
     }, function(err, commits) {
         if (err) {
@@ -310,7 +310,7 @@ RepositoryClient.prototype.getCommits = function(callback) {
  */
 RepositoryClient.prototype.getAllStatusesFor = function(sha, callback) {
     this.github.statuses.get({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       sha:  sha
     }, function(err, statuses) {
@@ -324,7 +324,7 @@ RepositoryClient.prototype.getAllStatusesFor = function(sha, callback) {
  */
 RepositoryClient.prototype.getCommit = function(sha, callback) {
     this.github.repos.getCommit({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       sha:  sha
     }, callback);
@@ -336,7 +336,7 @@ RepositoryClient.prototype.getCommit = function(sha, callback) {
  */
 RepositoryClient.prototype.compareCommits = function(base, head, callback) {
     this.github.repos.compareCommits({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       base: base,
       head: head
@@ -349,7 +349,7 @@ RepositoryClient.prototype.compareCommits = function(base, head, callback) {
  */
 RepositoryClient.prototype.getLastCommitOnPullRequest = function(prNumber, callback) {
     this.github.pullRequests.getCommits({
-      user:     this.org,
+      owner:     this.org,
       repo:     this.repo,
       number:   prNumber,
       per_page: 100
@@ -368,7 +368,7 @@ RepositoryClient.prototype.getLastCommitOnPullRequest = function(prNumber, callb
  */
 RepositoryClient.prototype.searchIssues = function(query, callback) {
     this.github.search.issues({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       q:    query
     }, callback);
@@ -380,7 +380,7 @@ RepositoryClient.prototype.searchIssues = function(query, callback) {
  */
 RepositoryClient.prototype.getContent = function(path, callback) {
     this.github.repos.getContent({
-      user: this.org,
+      owner: this.org,
       repo: this.repo,
       path: path
     }, callback);
@@ -391,8 +391,8 @@ RepositoryClient.prototype.getContent = function(path, callback) {
  * @public
  */
 RepositoryClient.prototype.rateLimit = function(callback) {
-    this.github.misc.rateLimit({
-      user: this.org,
+    this.github.misc.getRateLimit({
+      owner: this.org,
       repo: this.repo
     }, callback);
 };
@@ -409,14 +409,15 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
 
     log.debug('Finding existing web hooks for %s...', slug);
     this.github.repos.getHooks({
-      user: this.org,
+      owner: this.org,
       repo: this.repo
-    }, function(err, hooks) {
+  }, function(err, payload) {
         var hookRemovers = [];
         if (err) {
             log.error(err);
             return callback(err);
         }
+        var hooks = payload.data;
         log.debug('Found %s webhooks for %s', hooks.length, slug);
 
         if (! hooks.forEach) {
@@ -432,7 +433,7 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
                     // Remove the old webhook
                     log.warn('%s: Removing webhook %s for %s.', slug, hook.id, url);
                     me.github.repos.deleteHook({
-                      user: me.org,
+                      owner: me.org,
                       repo: me.repo,
                       id:   hook.id
                     }, hookRemovalCallback);
@@ -446,14 +447,15 @@ RepositoryClient.prototype.confirmWebhookExists = function(url, events, callback
             }
             if (me._createNewWebhooks && events && events.length) {
                 me.github.repos.createHook({
-                    user: me.org,
+                    owner: me.org,
                     repo: me.repo,
                     name: 'web',
                     config: {
                         url: url
                     },
                     events: events
-                }, function(err, data) {
+                }, function(err, payload) {
+                    var data = payload.data
                     if (err) {
                         return callback(err);
                     }
